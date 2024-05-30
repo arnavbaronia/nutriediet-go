@@ -1,0 +1,50 @@
+package model
+
+import "time"
+
+type DietTemplate struct {
+	ID   uint         `gorm:"primaryKey;autoIncrement:true" json:"id"`
+	Name string       `gorm:"column:name" json:"name,omitempty"`
+	Diet DietSchedule `gorm:"column:diet;type:json" json:"diet,omitempty"`
+}
+
+type DietHistory struct {
+	ID         uint         `gorm:"primaryKey;autoIncrement:true" json:"id"`
+	ClientID   uint64       `gorm:"column:client_id;foreignKey:ClientID" json:"client_id,omitempty"`
+	WeekNumber int          `gorm:"column:week_number" json:"week_number,omitempty"`
+	Date       time.Time    `gorm:"column:date" json:"date,omitempty"`
+	Weight     float32      `gorm:"column:weight" json:"weight,omitempty"`
+	Diet       DietSchedule `gorm:"column:diet;type:string" json:"diet,omitempty"`
+	Feedback   string       `gorm:"column:feedback" json:"feedback,omitempty"`
+	Tags       string       `gorm:"column:tags" json:"tags,omitempty"`
+	DietType   uint32       `gorm:"column:diet_type" json:"diet_type,omitempty"`
+}
+
+type Item struct {
+	ID          int    `json:"ID,omitempty"`
+	Name        string `json:"Name,omitempty"`
+	Quantity    string `json:"Quantity,omitempty"`
+	Preparation string `json:"Preparation,omitempty"`
+	Consumption string `json:"Consumption,omitempty"`
+	HasRecipe   bool   `json:"HasRecipe,omitempty"`
+}
+
+type Meal struct {
+	Timing      string `json:"Timing"`
+	Primary     []Item `json:"Primary"`
+	Alternative []Item `json:"Alternative"`
+}
+
+type DietSchedule struct {
+	OnWakingUp Meal `json:"On Waking Up"`
+	Breakfast  Meal `json:"Breakfast"`
+	MidMorning Meal `json:"MidMorning"`
+	Lunch      Meal `json:"Lunch"`
+	Evening    Meal `json:"Dinner"`
+	Night      Meal `json:"Night"`
+}
+
+type SaveDietForClientRequest struct {
+	Diet       DietSchedule
+	WeekNumber int
+}

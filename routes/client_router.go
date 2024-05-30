@@ -1,0 +1,14 @@
+package routes
+
+import (
+	"github.com/cd-Ishita/nutriediet-go/controller"
+	"github.com/cd-Ishita/nutriediet-go/middleware"
+	"github.com/gin-gonic/gin"
+)
+
+func ClientRoutes(incomingRoutes *gin.Engine) {
+	// to be used by admin and client routes both
+	incomingRoutes.Use(middleware.Authenticate)
+	incomingRoutes.GET("/users", controller.GetUsers)
+	incomingRoutes.GET("/user:user_id", controller.GetUser)
+}
