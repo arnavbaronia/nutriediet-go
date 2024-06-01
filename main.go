@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/cd-Ishita/nutriediet-go/controller"
 	clientController "github.com/cd-Ishita/nutriediet-go/controller/client"
-	"github.com/cd-Ishita/nutriediet-go/routes"
 	"github.com/gin-gonic/gin"
 	"os"
 
@@ -24,8 +23,8 @@ func main() {
 	router := gin.New()
 	router.Use(gin.Logger())
 
-	routes.AuthRoutes(router)
-	routes.ClientRoutes(router)
+	//routes.AuthRoutes(router)
+	//routes.ClientRoutes(router)
 
 	router.GET("/api-1", func(c *gin.Context) {
 		c.JSON(200, gin.H{"success": "Access granted for api-1"})

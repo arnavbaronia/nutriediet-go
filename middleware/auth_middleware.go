@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"fmt"
+	"github.com/cd-Ishita/nutriediet-go/helpers"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -16,4 +17,17 @@ func Authenticate(c *gin.Context) {
 	}
 
 	claims, err := helpers.ValidateToken(clientToken)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err})
+		c.Abort()
+		return
+	}
+
+	// setting context with this information
+	c.Set("email", claims.Email)
+	c.Set("first_name", claims.FirstName)
+	c.Set("last_name", claims.LastName)
+	c.Set("user_type", claims.UserType)
+	c.Set("user_id", claims.UserID)
+	c.Next()
 }

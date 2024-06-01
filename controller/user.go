@@ -48,6 +48,13 @@ func Login(c *gin.Context) {
 		return
 	}
 
+	if !valid {
+		fmt.Println("error: invalid password")
+		c.JSON(http.StatusForbidden, gin.H{"err": err.Error()})
+		// TODO: verify the err makes sense to send back to client
+		return
+	}
+
 	token, refreshToken, err := helpers.GenerateAllTokens(dbRecord.Email, dbRecord.FirstName, dbRecord.LastName, dbRecord.UserType, dbRecord.ID)
 	if err != nil {
 		fmt.Printf("error: cannot generate tokens for user: %s\n", dbRecord.Email)

@@ -1,6 +1,7 @@
 package helpers
 
 import (
+	"errors"
 	"fmt"
 	"github.com/cd-Ishita/nutriediet-go/database"
 	jwt "github.com/golang-jwt/jwt/v5"
@@ -75,5 +76,15 @@ func ValidateToken(token string) (SignedDetails, error) {
 		return SignedDetails{}, err
 	}
 
-	claims, ok := 
+	claims, ok := res.Claims.(*SignedDetails)
+	if !ok {
+		return SignedDetails{}, errors.New("invalid token")
+	}
+
+	// check if token is expired
+	if claims.ExpiresAt.Before(time.Now()) {
+		return SignedDetails{}, errors.New("expired token")
+	}
+
+	return *claims, nil
 }

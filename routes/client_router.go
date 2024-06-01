@@ -8,6 +8,7 @@ import (
 
 func ClientRoutes(incomingRoutes *gin.Engine) {
 	// to be used by admin and client routes both
+	// only after authentication, these routes can be used
 	incomingRoutes.Use(middleware.Authenticate)
 	incomingRoutes.GET("/users", controller.GetUsers)
 	incomingRoutes.GET("/user:user_id", controller.GetUser)
