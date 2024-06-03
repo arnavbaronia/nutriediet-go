@@ -2,10 +2,13 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"time"
+
 	"github.com/cd-Ishita/nutriediet-go/controller"
 	clientController "github.com/cd-Ishita/nutriediet-go/controller/client"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"os"
 
 	database "github.com/cd-Ishita/nutriediet-go/database"
 )
@@ -23,8 +26,16 @@ func main() {
 	router := gin.New()
 	router.Use(gin.Logger())
 
-	//routes.AuthRoutes(router)
-	//routes.ClientRoutes(router)
+	config := cors.Config{
+		AllowOrigins:     []string{"http://localhost:3000"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}
+
+	router.Use(cors.New(config))
 
 	router.GET("/api-1", func(c *gin.Context) {
 		c.JSON(200, gin.H{"success": "Access granted for api-1"})
@@ -49,7 +60,7 @@ func main() {
 	router.GET(":client_id/diet", clientController.GetRegularDietForClient)
 	router.GET(":client_id/detox_diet", clientController.GetDetoxDietForClient)
 
-	// CLIENT _ EXERCISE
+	// CLIENT - EXERCISE
 	router.GET(":client_id/exercise", controller.GetExercisesForClient)
 
 	// ADMIN - EXERCISE
@@ -62,5 +73,5 @@ func main() {
 	// ADMIN - DIET
 	router.POST(":client_id/diet", controller.SaveDietForClient)
 
-	router.Run(":" + port) // listen and serve on 0.0.0.0:8080
+	router.Run(":" + port) // listen and serve on 0.0.0.0:8081
 }

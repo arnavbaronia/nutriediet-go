@@ -3,12 +3,13 @@ package client
 import (
 	"errors"
 	"fmt"
+	"net/http"
+	"time"
+
 	"github.com/cd-Ishita/nutriediet-go/database"
 	"github.com/cd-Ishita/nutriediet-go/model"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
-	"net/http"
-	"time"
 )
 
 // UpdateWeightForClient ...
