@@ -7,6 +7,7 @@ import (
 
 	"github.com/cd-Ishita/nutriediet-go/controller"
 	clientController "github.com/cd-Ishita/nutriediet-go/controller/client"
+	"github.com/cd-Ishita/nutriediet-go/routes"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 
@@ -26,6 +27,8 @@ func main() {
 	router := gin.New()
 	router.Use(gin.Logger())
 
+	routes.AuthRoutes(router)
+	routes.UserRoutes(router)
 	config := cors.Config{
 		AllowOrigins:     []string{"http://localhost:3000"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
@@ -73,5 +76,5 @@ func main() {
 	// ADMIN - DIET
 	router.POST(":client_id/diet", controller.SaveDietForClient)
 
-	router.Run(":" + port) // listen and serve on 0.0.0.0:8081
+	router.Run(":" + port) // listen and serve on 0.0.0.0:8080
 }

@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func ClientRoutes(incomingRoutes *gin.Engine) {
+func UserRoutes(incomingRoutes *gin.Engine) {
 	// to be used by admin and client routes both
 	// only after authentication, these routes can be used
 	incomingRoutes.Use(middleware.Authenticate)

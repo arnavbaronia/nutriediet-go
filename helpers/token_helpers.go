@@ -26,7 +26,7 @@ func GenerateAllTokens(email, firstName, lastName, userType string, id uint64) (
 		FirstName: firstName,
 		LastName:  lastName,
 		UserType:  userType,
-		UserID:    strconv.FormatUint(id, 64),
+		UserID:    strconv.FormatUint(id, 10),
 		RegisteredClaims: jwt.RegisteredClaims{
 			// TODO: finalise the expires at values
 			ExpiresAt: jwt.NewNumericDate(time.Now().Local().Add(time.Hour * time.Duration(24))),
@@ -57,10 +57,10 @@ func GenerateAllTokens(email, firstName, lastName, userType string, id uint64) (
 
 func UpdateTokens(token, refreshToken string, id uint64) error {
 	db := database.DB
-	err := db.Table("users").Updates(map[string]interface{}{
+	err := db.Table("user_auths").Where("id = ?", id).Updates(map[string]interface{}{
 		"token":         token,
 		"refresh_token": refreshToken,
-	}).Where("id = ?", id).Error
+	}).Error
 	if err != nil {
 		fmt.Println("error: cannot update the tokens")
 		return err

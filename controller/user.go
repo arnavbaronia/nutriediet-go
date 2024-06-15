@@ -18,7 +18,7 @@ func SignUp(c *gin.Context) {
 }
 
 func Login(c *gin.Context) {
-	user := model.User{}
+	user := model.UserAuth{}
 	if err := c.BindJSON(&user); err != nil {
 		fmt.Errorf("error: request cannot be parsed #{err}")
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -28,7 +28,7 @@ func Login(c *gin.Context) {
 	db := database.DB
 
 	// find the record with this email id
-	dbRecord := model.User{}
+	dbRecord := model.UserAuth{}
 	err := db.Where("email = ?", user.Email).First(&dbRecord).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		fmt.Errorf("error: cannot find a record for email: %s", user.Email)
@@ -84,7 +84,7 @@ func GetUser(c *gin.Context) {
 	}
 
 	db := database.DB
-	user := model.User{}
+	user := model.UserAuth{}
 	err = db.Where("id = ?", clientId).Find(&user).Error
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
@@ -95,7 +95,7 @@ func GetUser(c *gin.Context) {
 }
 
 func GetUsers(c *gin.Context) {
-	var users []model.User
+	var users []model.UserAuth
 
 	if !helpers.CheckUserType(c, "ADMIN") {
 		fmt.Println("error: client user not allowed to access")
@@ -111,12 +111,20 @@ func GetUsers(c *gin.Context) {
 
 func CreateUser(c *gin.Context) {
 	// get data from req
-	user := model.User{}
+	user := model.UserAuth{}
 	if err := c.BindJSON(&user); err != nil {
 		fmt.Errorf("error: request cannot be parsed #{err}")
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	err := database.DB.Create(&user).Error
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+		return
+	}
+
+	fmt.Printf("user created %+v", user)
 
 	// TODO: add a struct validation before inserting in DB
 	// what if user already exists?
@@ -131,7 +139,7 @@ func CreateUser(c *gin.Context) {
 	hashedPassword, err := HashPassword(user.Password)
 	user.Password = hashedPassword
 	// store in DB
-	err = database.DB.Create(&user).Error
+	err = database.DB.Updates(&user).Where("id", user.ID).Error
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
 		return

@@ -8,6 +8,6 @@ import (
 func AuthRoutes(incomingRoutes *gin.Engine) {
 	// these are public routes, hence in AuthRoutes
 	// open to all
-	incomingRoutes.POST("users/signup", userController.SignUp)
-	incomingRoutes.POST("users/login", userController.Login)
+	incomingRoutes.POST("signup", userController.SignUp)
+	incomingRoutes.POST("login", userController.Login)
 }

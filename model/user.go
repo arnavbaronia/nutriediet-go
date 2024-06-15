@@ -2,7 +2,7 @@ package model
 
 import "time"
 
-type User struct {
+type UserAuth struct {
 	ID           uint64 `gorm:"primaryKey;autoIncrement:true" json:"id"`
 	FirstName    string `gorm:"first_name" json:"first_name" validate:"required, min=2, max=100"`
 	LastName     string `gorm:"last_name" json:"last_name" validate:"required, min=2, max=100"`
