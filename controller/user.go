@@ -99,7 +99,7 @@ func GetUsers(c *gin.Context) {
 
 	if !helpers.CheckUserType(c, "ADMIN") {
 		fmt.Println("error: client user not allowed to access")
-		c.JSON(http.StatusUnauthorized, gin.H{"err": "authorized access by client"})
+		c.JSON(http.StatusUnauthorized, gin.H{"err": "unauthorized access by client"})
 		return
 	}
 	// TODO: pagination?

@@ -73,6 +73,7 @@ func ValidateToken(token string) (SignedDetails, error) {
 		return []byte(SECRET_KEY), nil
 	})
 	if err != nil {
+		fmt.Errorf("error parsing claims: %v", err)
 		return SignedDetails{}, err
 	}
 

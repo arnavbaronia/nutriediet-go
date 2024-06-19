@@ -37,3 +37,14 @@ type Client struct {
 	UpdatedAt *time.Time `gorm:"column:updated_at;type:timestamp not null;default:CURRENT_TIMESTAMP;" json:"updated_at"`
 	DeletedAt *time.Time `gorm:"column:deleted_at;type:timestamp;default:NULL;" json:"deleted_at,omitempty"`
 }
+
+type ClientMiniInfo struct {
+	ID              uint64    `gorm:"primaryKey;autoIncrement:true" json:"id"`
+	Name            string    `gorm:"column:name" json:"name,omitempty"`
+	DietitianId     int       `gorm:"column:dietitian_id" json:"dietitian_id,omitempty"`
+	Group           int       `gorm:"column:\"group\"" json:"group,omitempty"`
+	Email           string    `gorm:"column:email" json:"email,omitempty"`
+	IsActive        bool      `gorm:"column:is_active" json:"is_active,omitempty"`
+	NextPaymentDate time.Time `gorm:"column:next_payment_date" json:"next_payment_date,omitempty"`
+	LastDietDate    time.Time `json:"last_diet_date,omitempty"`
+}

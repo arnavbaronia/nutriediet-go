@@ -4,6 +4,8 @@ import (
 	"github.com/cd-Ishita/nutriediet-go/controller"
 	"github.com/cd-Ishita/nutriediet-go/middleware"
 	"github.com/gin-gonic/gin"
+
+	adminController "github.com/cd-Ishita/nutriediet-go/controller/admin"
 )
 
 func UserRoutes(incomingRoutes *gin.Engine) {
@@ -12,4 +14,5 @@ func UserRoutes(incomingRoutes *gin.Engine) {
 	incomingRoutes.Use(middleware.Authenticate)
 	incomingRoutes.GET("/users", controller.GetUsers)
 	incomingRoutes.GET("/user:user_id", controller.GetUser)
+	incomingRoutes.GET("/admin/clients", adminController.GetAllClients)
 }
