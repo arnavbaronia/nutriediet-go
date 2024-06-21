@@ -18,7 +18,6 @@ func main() {
 	database.ConnectToDB()
 
 	port := os.Getenv("PORT")
-
 	if port == "" {
 		fmt.Println("no port found")
 		port = "8081"
@@ -27,18 +26,19 @@ func main() {
 	router := gin.New()
 	router.Use(gin.Logger())
 
-	routes.AuthRoutes(router)
-	routes.UserRoutes(router)
+	// CORS configuration
 	config := cors.Config{
 		AllowOrigins:     []string{"http://localhost:3000"},
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}
-
 	router.Use(cors.New(config))
+
+	routes.AuthRoutes(router)
+	routes.UserRoutes(router)
 
 	router.GET("/api-1", func(c *gin.Context) {
 		c.JSON(200, gin.H{"success": "Access granted for api-1"})
@@ -60,7 +60,7 @@ func main() {
 	router.GET(":client_id/weight_update", clientController.WeightUpdationStatus)
 
 	// CLIENT - DIET
-	router.GET(":client_id/diet", clientController.GetRegularDietForClient)
+	router.GET("client/:client_id/diet", clientController.GetRegularDietForClient)
 	router.GET(":client_id/detox_diet", clientController.GetDetoxDietForClient)
 
 	// CLIENT - EXERCISE
@@ -76,5 +76,5 @@ func main() {
 	// ADMIN - DIET
 	router.POST(":client_id/diet", controller.SaveDietForClient)
 
-	router.Run(":" + port) // listen and serve on 0.0.0.0:8080
+	router.Run(":" + port) // listen and serve on 0.0.0.0:8081
 }

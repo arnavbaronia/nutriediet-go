@@ -2,9 +2,10 @@ package middleware
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/cd-Ishita/nutriediet-go/helpers"
 	"github.com/gin-gonic/gin"
-	"net/http"
 )
 
 func Authenticate(c *gin.Context) {
