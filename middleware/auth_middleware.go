@@ -3,20 +3,30 @@ package middleware
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/cd-Ishita/nutriediet-go/helpers"
 	"github.com/gin-gonic/gin"
 )
 
 func Authenticate(c *gin.Context) {
-	clientToken := c.Request.Header.Get("token")
-	if clientToken == "" {
-		fmt.Println("no client token received")
+	authHeader := c.Request.Header.Get("Authorization")
+	if authHeader == "" {
+		fmt.Println("no authorization header received")
 		c.JSON(http.StatusBadRequest, gin.H{"err": "no token received"})
 		c.Abort()
 		return
 	}
 
+	parts := strings.Split(authHeader, " ")
+	if len(parts) != 2 || parts[0] != "Bearer" {
+		fmt.Println("invalid authorization header format")
+		c.JSON(http.StatusBadRequest, gin.H{"err": "invalid token format"})
+		c.Abort()
+		return
+	}
+
+	clientToken := parts[1]
 	claims, err := helpers.ValidateToken(clientToken)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err})
