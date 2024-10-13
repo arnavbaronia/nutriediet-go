@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/cd-Ishita/nutriediet-go/database"
+	"github.com/cd-Ishita/nutriediet-go/middleware"
 	"github.com/cd-Ishita/nutriediet-go/model"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -16,23 +17,46 @@ const (
 )
 
 func GetRegularDietForClient(c *gin.Context) {
+	isAllowed, isActive := middleware.ClientAuthentication(c.Param("email"), c.Param("client_id"))
+	if !isAllowed {
+		c.JSON(http.StatusUnauthorized, gin.H{"clientEmail": c.Param("email"), "requestClientID": c.Param("client_id")})
+		return
+	}
+
+	if !isActive {
+		c.JSON(http.StatusOK, gin.H{"isActive": false})
+		return
+	}
+
 	diet, err := getDietForClient(c.Param("client_id"), TypeDiet)
 	if err != nil {
 		fmt.Errorf("error finding diet for client_id: %s", c.Param("client_id"))
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"diet": diet})
+	c.JSON(http.StatusOK, gin.H{"isActive": true, "diet": diet})
 }
 
 func GetDetoxDietForClient(c *gin.Context) {
+	isAllowed, isActive := middleware.ClientAuthentication(c.Param("email"), c.Param("client_id"))
+	if !isAllowed {
+		c.JSON(http.StatusUnauthorized, gin.H{"clientEmail": c.Param("email"), "requestClientID": c.Param("client_id")})
+		return
+	}
+
+	if !isActive {
+		c.JSON(http.StatusOK, gin.H{"isActive": false})
+		return
+	}
+
 	diet, err := getDietForClient(c.Param("client_id"), TypeDetoxDiet)
 	if err != nil {
 		fmt.Errorf("error finding diet for client_id: %s", c.Param("client_id"))
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"diet": diet})
+	c.JSON(http.StatusOK, gin.H{"isActive": true, "diet": diet})
+	return
 }
 
 func getDietForClient(clientId, dietType string) (model.DietSchedule, error) {

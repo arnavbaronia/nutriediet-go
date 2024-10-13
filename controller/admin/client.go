@@ -16,7 +16,7 @@ func GetAllClients(c *gin.Context) {
 	db := database.DB
 
 	if !helpers.CheckUserType(c, "ADMIN") {
-		fmt.Println("error: client user not allowed to access")
+		fmt.Errorf("error: client user not allowed to access")
 		c.JSON(http.StatusUnauthorized, gin.H{"err": "unauthorized access by client"})
 		return
 	}

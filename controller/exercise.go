@@ -9,21 +9,6 @@ import (
 	"strconv"
 )
 
-func GetExercisesForClient(c *gin.Context) {
-	db := database.DB
-
-	exercises := []model.Exercise{}
-	err := db.Table("exercises").First(&exercises).Error
-	if err != nil {
-		fmt.Errorf("error: fetching all exercises: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"exercises": exercises})
-	return
-}
-
 func GetExercisesForAdmin(c *gin.Context) {
 	// authentication for admin
 }

@@ -1,7 +1,11 @@
 package middleware
 
 import (
+	"errors"
 	"fmt"
+	"github.com/cd-Ishita/nutriediet-go/database"
+	"github.com/cd-Ishita/nutriediet-go/model"
+	"gorm.io/gorm"
 	"net/http"
 	"strings"
 
@@ -42,4 +46,25 @@ func Authenticate(c *gin.Context) {
 	c.Set("user_type", claims.UserType)
 	c.Set("user_id", claims.UserID)
 	c.Next()
+}
+
+func ClientAuthentication(emailFromContext string, clientIDFromReq string) (bool, bool) {
+	// To authenticate, fetch the client_id associated with this email id
+	db := database.DB
+	client := model.Client{}
+	err := db.Table("clients").Where("email = ?", emailFromContext).First(&client).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		fmt.Errorf("error: client with email %s does not exist", emailFromContext)
+		return false, false
+	} else if err != nil {
+		fmt.Errorf("error: could not fetch client with email %s | err: %v", emailFromContext, err)
+		return false, false
+	}
+
+	if string(client.ID) != clientIDFromReq {
+		fmt.Errorf("error: client with ID: %d trying to access another clients information", client.ID)
+		return false, false
+	}
+
+	return true, client.IsActive
 }

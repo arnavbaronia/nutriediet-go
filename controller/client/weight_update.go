@@ -3,6 +3,7 @@ package client
 import (
 	"errors"
 	"fmt"
+	"github.com/cd-Ishita/nutriediet-go/middleware"
 	"net/http"
 	"time"
 
@@ -16,6 +17,17 @@ import (
 // if there is an update from client side, it means
 // no updations allowed after sending diet for 5 days
 func UpdateWeightForClient(c *gin.Context) {
+	isAllowed, isActive := middleware.ClientAuthentication(c.Param("email"), c.Param("client_id"))
+	if !isAllowed {
+		c.JSON(http.StatusUnauthorized, gin.H{"clientEmail": c.Param("email"), "requestClientID": c.Param("client_id")})
+		return
+	}
+
+	if !isActive {
+		c.JSON(http.StatusOK, gin.H{"isActive": false})
+		return
+	}
+
 	db := database.DB
 
 	status, err := IsWeightUpdationAllowed(c.Param("client_id"))
@@ -56,11 +68,22 @@ func UpdateWeightForClient(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{})
+	c.JSON(http.StatusOK, gin.H{"isActive": true})
 	return
 }
 
 func WeightUpdationStatus(c *gin.Context) {
+	isAllowed, isActive := middleware.ClientAuthentication(c.Param("email"), c.Param("client_id"))
+	if !isAllowed {
+		c.JSON(http.StatusUnauthorized, gin.H{"clientEmail": c.Param("email"), "requestClientID": c.Param("client_id")})
+		return
+	}
+
+	if !isActive {
+		c.JSON(http.StatusOK, gin.H{"isActive": false})
+		return
+	}
+
 	status, err := IsWeightUpdationAllowed(c.Param("client_id"))
 	if errors.Is(gorm.ErrRecordNotFound, err) {
 		fmt.Println("Record not found for client_id: " + c.Param("client_id"))
@@ -74,7 +97,7 @@ func WeightUpdationStatus(c *gin.Context) {
 
 	if status {
 		fmt.Println("Weight updation allowed for client_id: " + c.Param("client_id"))
-		c.JSON(http.StatusOK, gin.H{"status": "allowed"})
+		c.JSON(http.StatusOK, gin.H{"isActive": true, "status": "allowed"})
 		return
 	} else {
 		fmt.Println("Weight updation not allowed for client_id: " + c.Param("client_id"))
@@ -85,7 +108,6 @@ func WeightUpdationStatus(c *gin.Context) {
 
 // IsWeightUpdationAllowed show the component to update weight only if this value comes true
 func IsWeightUpdationAllowed(clientId string) (bool, error) {
-
 	db := database.DB
 
 	date := time.Time{}

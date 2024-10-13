@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/cd-Ishita/nutriediet-go/controller"
-	clientController "github.com/cd-Ishita/nutriediet-go/controller/client"
 	"github.com/cd-Ishita/nutriediet-go/routes"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -50,21 +49,6 @@ func main() {
 
 	router.POST("/create_user", controller.CreateUser)
 	router.GET("/get_users", controller.GetUsers)
-
-	// CLIENT - PROFILE
-	router.POST(":client_id/my_profile", clientController.SaveProfileByClient)
-	router.GET(":client_id/my_profile", clientController.GetProfileForClient)
-
-	// CLIENT - WEIGHT_UPDATE
-	router.POST(":client_id/weight_update", clientController.UpdateWeightForClient)
-	router.GET(":client_id/weight_update", clientController.WeightUpdationStatus)
-
-	// CLIENT - DIET
-	router.GET("client/:client_id/diet", clientController.GetRegularDietForClient)
-	router.GET(":client_id/detox_diet", clientController.GetDetoxDietForClient)
-
-	// CLIENT - EXERCISE
-	router.GET(":client_id/exercise", controller.GetExercisesForClient)
 
 	// ADMIN - EXERCISE
 	router.GET("exercise", controller.GetExercisesForAdmin)
