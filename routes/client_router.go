@@ -14,6 +14,10 @@ func UserRoutes(incomingRoutes *gin.Engine) {
 	incomingRoutes.Use(middleware.Authenticate)
 	incomingRoutes.GET("/users", controller.GetUsers)
 	incomingRoutes.GET("/user:user_id", controller.GetUser)
+
+	// ADMIN ROUTES
 	incomingRoutes.GET("/admin/clients", adminController.GetAllClients)
 	incomingRoutes.GET("/admin/client/:client_id", adminController.GetClientInfo)
+	incomingRoutes.POST("/admin/client/:client_id", adminController.UpdateClientInfo)
+	incomingRoutes.POST("/admin/client/:client_id/activation", adminController.ActivateOrDeactivateClientAccount)
 }

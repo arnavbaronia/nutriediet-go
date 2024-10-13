@@ -69,9 +69,10 @@ func GetProfileForClient(c *gin.Context) {
 // only the data the client is allowed to update / retrieve is added to the response
 // starting weight is allowed to be updated only during first time, implement how?
 func migrateClientProfile(client, req model.Client) model.Client {
-	if req.Email != "" {
-		client.Email = req.Email
-	}
+	// TODO: decide if you can allow a client to change their email id
+	//if req.Email != "" {
+	//	client.Email = req.Email
+	//}
 	if req.Name != "" {
 		client.Name = req.Name
 	}

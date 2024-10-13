@@ -1,11 +1,14 @@
 package admin
 
 import (
+	"errors"
 	"fmt"
+	"github.com/cd-Ishita/nutriediet-go/constants"
 	"github.com/cd-Ishita/nutriediet-go/database"
 	"github.com/cd-Ishita/nutriediet-go/helpers"
 	"github.com/cd-Ishita/nutriediet-go/model"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 	"net/http"
 )
 
@@ -81,5 +84,113 @@ func GetClientInfo(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"client": client, "diets": dietHistories})
+	return
+}
+
+func UpdateClientInfo(c *gin.Context) {
+	db := database.DB
+
+	if !helpers.CheckUserType(c, "ADMIN") {
+		fmt.Println("error: client user not allowed to access")
+		c.JSON(http.StatusUnauthorized, gin.H{"err": "unauthorized access by client"})
+		return
+	}
+
+	req := model.Client{}
+	if err := c.BindJSON(&req); err != nil {
+		fmt.Println("Wrong request, cannot be extracted. For client_id: " + c.Param("client_id"))
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	client := model.Client{}
+	err := db.Table("clients").Where("id = ?", c.Param("client_id")).First(&client).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		fmt.Errorf("error: client does not exist with id %s", c.Param("client_id"))
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if err != nil {
+		fmt.Errorf("error: could not fetch client with id %s | %v", c.Param("client_id"), err)
+		c.JSON(http.StatusInternalServerError, gin.H{"err": err})
+		return
+	}
+
+	upsertedClient := migrateClientInfoForAdmin(req, client)
+	err = db.Save(&upsertedClient).Error
+	if err != nil {
+		fmt.Errorf("error: could not save client information | client_info: %v | err: %v", upsertedClient, err)
+		c.JSON(http.StatusInternalServerError, gin.H{"err": err})
+		return
+	}
+
+	c.JSON(http.StatusAccepted, gin.H{"client": upsertedClient})
+	return
+}
+
+func migrateClientInfoForAdmin(updatedInfo model.Client, existingInfo model.Client) model.Client {
+	// TODO: do we want admin to be able to update the starting weight in cases where client comes back
+	client := model.Client{
+		ID:                existingInfo.ID,
+		Name:              updatedInfo.Name,
+		Age:               updatedInfo.Age,
+		City:              updatedInfo.City,
+		PhoneNumber:       updatedInfo.PhoneNumber,
+		DateOfJoining:     updatedInfo.DateOfJoining,
+		Package:           updatedInfo.Package,
+		AmountPaid:        updatedInfo.AmountPaid,
+		LastPaymentDate:   updatedInfo.LastPaymentDate,
+		NextPaymentDate:   updatedInfo.NextPaymentDate, // should be computed field
+		Remarks:           updatedInfo.Remarks,
+		DietitianId:       updatedInfo.DietitianId,
+		Group:             updatedInfo.Group,
+		Email:             existingInfo.Email,
+		Height:            updatedInfo.Height,
+		StartingWeight:    existingInfo.StartingWeight,
+		DietaryPreference: updatedInfo.DietaryPreference,
+		MedicalHistory:    updatedInfo.MedicalHistory,
+		Allergies:         updatedInfo.Allergies,
+		Stay:              updatedInfo.Stay,
+		Exercise:          updatedInfo.Exercise,
+		Comments:          updatedInfo.Comments,
+		DietRecall:        updatedInfo.DietRecall,
+		IsActive:          updatedInfo.IsActive,
+		Locality:          updatedInfo.Locality,
+	}
+	client.NextPaymentDate = client.LastPaymentDate.AddDate(0, 0, constants.PackageDayMap[updatedInfo.Package])
+	return client
+}
+
+// deactivation of client account handled by a separate API
+func ActivateOrDeactivateClientAccount(c *gin.Context) {
+	db := database.DB
+
+	if !helpers.CheckUserType(c, "ADMIN") {
+		fmt.Println("error: client user not allowed to access")
+		c.JSON(http.StatusUnauthorized, gin.H{"err": "unauthorized access by client"})
+		return
+	}
+
+	// Check if user exists
+	client := model.Client{}
+	err := db.Table("clients").Where("id = ?", c.Param("client_id")).First(&client).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		fmt.Errorf("error: client does not exist with id %s", c.Param("client_id"))
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	} else if err != nil {
+		fmt.Errorf("error: could not fetch client with id %s | %v", c.Param("client_id"), err)
+		c.JSON(http.StatusInternalServerError, gin.H{"err": err})
+		return
+	}
+
+	err = db.Where("client_id = ?", c.Param("client_id")).UpdateColumn("is_active", !client.IsActive).Error
+	if err != nil {
+		fmt.Errorf("error: could not update activation value for client with id %s | err: %v", c.Param("client_id"), err)
+		c.JSON(http.StatusInternalServerError, gin.H{"err": err})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true})
 	return
 }
