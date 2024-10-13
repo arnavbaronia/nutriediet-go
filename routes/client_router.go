@@ -15,4 +15,5 @@ func UserRoutes(incomingRoutes *gin.Engine) {
 	incomingRoutes.GET("/users", controller.GetUsers)
 	incomingRoutes.GET("/user:user_id", controller.GetUser)
 	incomingRoutes.GET("/admin/clients", adminController.GetAllClients)
+	incomingRoutes.GET("/admin/client/:client_id", adminController.GetClientInfo)
 }

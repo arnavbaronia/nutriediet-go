@@ -31,13 +31,13 @@ func Login(c *gin.Context) {
 
 	// find the record with this email id
 	dbRecord := model.UserAuth{}
-	err := db.Where("email = ?", user.Email).First(&dbRecord).Error
+	err := db.Where("email = ? and user_type = ?", user.Email, user.UserType).First(&dbRecord).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		fmt.Errorf("error: cannot find a record for email: %s", user.Email)
+		fmt.Errorf("error: cannot find a record for email: %s and user_type: %s", user.Email, user.UserType)
 		c.JSON(http.StatusNotFound, gin.H{"err": "Record Not Found"})
 		return
 	} else if err != nil {
-		fmt.Errorf("error: cannot extract record for email: %s", user.Email)
+		fmt.Errorf("error: cannot extract record for email: %s and user_type: %s", user.Email, user.UserType)
 		c.JSON(http.StatusNotFound, gin.H{"err": "Can't extract record"})
 		return
 	}
@@ -131,8 +131,6 @@ func CreateUser(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
 		return
 	}
-
-	fmt.Printf("user created %+v", user)
 
 	// TODO: add a struct validation before inserting in DB
 	// what if user already exists?

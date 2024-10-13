@@ -29,6 +29,7 @@ func Authenticate(c *gin.Context) {
 	clientToken := parts[1]
 	claims, err := helpers.ValidateToken(clientToken)
 	if err != nil {
+		fmt.Println("error validating the token")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err})
 		c.Abort()
 		return

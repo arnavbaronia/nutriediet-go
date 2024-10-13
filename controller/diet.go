@@ -61,4 +61,5 @@ func SaveDietForClient(c *gin.Context) {
 
 	// Return a success response
 	c.JSON(http.StatusCreated, gin.H{"message": "Diet information saved successfully"})
+	return
 }

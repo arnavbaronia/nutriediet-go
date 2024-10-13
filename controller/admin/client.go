@@ -54,3 +54,32 @@ func GetAllClients(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"clients": clients})
 	return
 }
+
+func GetClientInfo(c *gin.Context) {
+	db := database.DB
+
+	if !helpers.CheckUserType(c, "ADMIN") {
+		fmt.Println("error: client user not allowed to access")
+		c.JSON(http.StatusUnauthorized, gin.H{"err": "unauthorized access by client"})
+		return
+	}
+
+	client := model.Client{}
+	err := db.Table("clients").Where("id = ?", c.Param("client_id")).First(&client).Error
+	if err != nil {
+		fmt.Errorf("error: could not fetch client with id %s | %v", c.Param("client_id"), err)
+		c.JSON(http.StatusInternalServerError, gin.H{"err": err})
+		return
+	}
+
+	dietHistories := []model.DietHistory{}
+	err = db.Table("diet_histories").Where("client_id = ?", c.Param("client_id")).Select("id", "week_number").Find(&dietHistories).Error
+	if err != nil {
+		fmt.Errorf("error: could not fetch number of rows for client_id %s | %v", c.Param("client_id"), err)
+		c.JSON(http.StatusInternalServerError, gin.H{"err": err})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"client": client, "diets": dietHistories})
+	return
+}

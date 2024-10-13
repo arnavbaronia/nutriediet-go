@@ -29,14 +29,14 @@ func GenerateAllTokens(email, firstName, lastName, userType string, id uint64) (
 		UserID:    strconv.FormatUint(id, 10),
 		RegisteredClaims: jwt.RegisteredClaims{
 			// TODO: finalise the expires at values
-			ExpiresAt: jwt.NewNumericDate(time.Now().Local().Add(time.Hour * time.Duration(24))),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Local().Add(time.Hour * time.Duration(8760))),
 		},
 	}
 
 	refreshClaims := &SignedDetails{
 		RegisteredClaims: jwt.RegisteredClaims{
 			// TODO: finalise the expires at values
-			ExpiresAt: jwt.NewNumericDate(time.Now().Local().Add(time.Hour * time.Duration(168))),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Local().Add(time.Hour * time.Duration(8760))),
 		},
 	}
 
