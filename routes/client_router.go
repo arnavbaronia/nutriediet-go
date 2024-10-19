@@ -46,4 +46,11 @@ func UserRoutes(incomingRoutes *gin.Engine) {
 	// <<<<<<<<===============================================================================>>>>>>
 	// EMAIL-BASED PROFILE CREATION (Separate from client routes to avoid conflicts)
 	incomingRoutes.POST("/users/:email/create_profile", clientController.CreateProfileByClient)
+	// ADMIN - DIET TEMPLATES
+	incomingRoutes.GET("/admin/diet_templates", adminController.GetDietTemplatesList)
+	incomingRoutes.GET("/admin/diet_templates/:diet_template_id", adminController.GetDietTemplateByID)
+	incomingRoutes.POST("/admin/diet_templates/new", adminController.CreateDietTemplate)
+	incomingRoutes.POST("/admin/diet_templates/update", adminController.UpdateDietTemplate)
+	incomingRoutes.POST("/admin/diet_templates/:diet_template_id/delete", adminController.DeleteDietTemplateByID)
+
 }

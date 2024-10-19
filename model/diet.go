@@ -3,9 +3,12 @@ package model
 import "time"
 
 type DietTemplate struct {
-	ID   uint         `gorm:"primaryKey;autoIncrement:true" json:"id"`
-	Name string       `gorm:"column:name" json:"name,omitempty"`
-	Diet DietSchedule `gorm:"column:diet;type:json" json:"diet,omitempty"`
+	ID        uint         `gorm:"primaryKey;autoIncrement:true" json:"id"`
+	Name      string       `gorm:"column:name" json:"name,omitempty"`
+	Diet      DietSchedule `gorm:"column:diet;type:json" json:"diet,omitempty"`
+	CreatedAt *time.Time   `gorm:"column:created_at;type:timestamp not null;default:CURRENT_TIMESTAMP;" json:"created_at"`
+	UpdatedAt *time.Time   `gorm:"column:updated_at;type:timestamp not null;default:CURRENT_TIMESTAMP;" json:"updated_at"`
+	DeletedAt *time.Time   `gorm:"column:deleted_at;type:timestamp;default:NULL;" json:"deleted_at,omitempty"`
 }
 
 type DietHistory struct {
@@ -18,6 +21,9 @@ type DietHistory struct {
 	Feedback   string       `gorm:"column:feedback" json:"feedback,omitempty"`
 	Tags       string       `gorm:"column:tags" json:"tags,omitempty"`
 	DietType   uint32       `gorm:"column:diet_type" json:"diet_type,omitempty"`
+	CreatedAt  *time.Time   `gorm:"column:created_at;type:timestamp not null;default:CURRENT_TIMESTAMP;" json:"created_at"`
+	UpdatedAt  *time.Time   `gorm:"column:updated_at;type:timestamp not null;default:CURRENT_TIMESTAMP;" json:"updated_at"`
+	DeletedAt  *time.Time   `gorm:"column:deleted_at;type:timestamp;default:NULL;" json:"deleted_at,omitempty"`
 }
 
 type Item struct {
@@ -47,4 +53,9 @@ type DietSchedule struct {
 type SaveDietForClientRequest struct {
 	Diet       DietSchedule
 	WeekNumber int
+}
+
+type CreateDietTemplateRequest struct {
+	Diet DietSchedule `json:"diet,omitempty"`
+	Name string       `json:"name,omitempty"`
 }
