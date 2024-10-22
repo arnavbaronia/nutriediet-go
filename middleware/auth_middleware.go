@@ -68,3 +68,18 @@ func ClientAuthentication(emailFromContext string, clientIDFromReq string) (bool
 
 	return true, client.IsActive
 }
+
+func IsClientActive(emailFromContext string) bool {
+	db := database.DB
+	client := model.Client{}
+	err := db.Table("clients").Where("email = ?", emailFromContext).First(&client).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		fmt.Errorf("error: client with email %s does not exist", emailFromContext)
+		return false
+	} else if err != nil {
+		fmt.Errorf("error: could not fetch client with email %s | err: %v", emailFromContext, err)
+		return false
+	}
+
+	return client.IsActive
+}

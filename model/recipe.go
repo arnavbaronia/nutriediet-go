@@ -12,3 +12,16 @@ type Recipe struct {
 	UpdatedAt   *time.Time `gorm:"column:updated_at;type:timestamp not null;default:CURRENT_TIMESTAMP;" json:"updated_at"`
 	DeletedAt   *time.Time `gorm:"column:deleted_at;type:timestamp;default:NULL;" json:"deleted_at,omitempty"`
 }
+
+type CreateRecipeRequest struct {
+	Name        string
+	Ingredients []string
+	Preparation []string
+}
+
+type UpdateRecipeRequest struct {
+	ID          uint
+	Name        string
+	Ingredients []string
+	Preparation []string
+}
