@@ -10,36 +10,40 @@ import (
 )
 
 func UserRoutes(incomingRoutes *gin.Engine) {
-	// to be used by admin and client routes both
-	// only after authentication, these routes can be used
+	// Authentication middleware applies to all routes
 	incomingRoutes.Use(middleware.Authenticate)
+
+	// USER ROUTES
 	incomingRoutes.GET("/users", controller.GetUsers)
-	incomingRoutes.GET("/user:user_id", controller.GetUser)
+	incomingRoutes.GET("/user/:user_id", controller.GetUser)
 
 	// <<<<<<<<===============================================================================>>>>>>
-	// CLIENT ROUTES
+	// CLIENT ROUTES (Prefix with `/clients` for all client-related routes)
 
 	// CLIENT - WEIGHT UPDATE
-	incomingRoutes.POST(":client_id/weight_update", clientController.UpdateWeightForClient)
-	incomingRoutes.GET(":client_id/weight_update", clientController.WeightUpdationStatus)
+	incomingRoutes.POST("/clients/:client_id/weight_update", clientController.UpdateWeightForClient)
+	incomingRoutes.GET("/clients/:client_id/weight_update", clientController.WeightUpdationStatus)
 
 	// CLIENT - DIET
-	incomingRoutes.GET(":client_id/diet", clientController.GetRegularDietForClient)
-	incomingRoutes.GET(":client_id/detox_diet", clientController.GetDetoxDietForClient)
+	incomingRoutes.GET("/clients/:client_id/diet", clientController.GetRegularDietForClient)
+	incomingRoutes.GET("/clients/:client_id/detox_diet", clientController.GetDetoxDietForClient)
 
 	// CLIENT - EXERCISE
-	incomingRoutes.GET(":client_id/exercise", clientController.GetExercisesForClient)
+	incomingRoutes.GET("/clients/:client_id/exercise", clientController.GetExercisesForClient)
 
 	// CLIENT - PROFILE
-	incomingRoutes.POST(":client_id/my_profile", clientController.UpdateProfileByClient)
-	incomingRoutes.GET(":client_id/my_profile", clientController.GetProfileForClient)
-	incomingRoutes.POST("/:email/create_profile", clientController.CreateProfileByClient)
+	incomingRoutes.POST("/clients/:client_id/my_profile", clientController.UpdateProfileByClient)
+	incomingRoutes.GET("/clients/:client_id/my_profile", clientController.GetProfileForClient)
 
 	// <<<<<<<<===============================================================================>>>>>>
-	// ADMIN ROUTES
+	// ADMIN ROUTES (Prefix with `/admin` for all admin-related routes)
+
 	incomingRoutes.GET("/admin/clients", adminController.GetAllClients)
 	incomingRoutes.GET("/admin/client/:client_id", adminController.GetClientInfo)
 	incomingRoutes.POST("/admin/client/:client_id", adminController.UpdateClientInfo)
 	incomingRoutes.POST("/admin/client/:client_id/activation", adminController.ActivateOrDeactivateClientAccount)
 
+	// <<<<<<<<===============================================================================>>>>>>
+	// EMAIL-BASED PROFILE CREATION (Separate from client routes to avoid conflicts)
+	incomingRoutes.POST("/users/:email/create_profile", clientController.CreateProfileByClient)
 }
