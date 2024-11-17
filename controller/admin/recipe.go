@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -22,7 +23,7 @@ func GetRecipeByMealID(c *gin.Context) {
 	db := database.DB
 
 	recipe := model.Recipe{}
-	if err := db.Where("meal_id = ?", c.Param("meal_id")).First(&recipe).Error; err != nil {
+	if err := db.Where("id = ?", c.Param("meal_id")).First(&recipe).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			fmt.Errorf("error: GetRecipeByMealIDForClient | recipe does not exist with meal_id: %d", c.Param("meal_id"))
 			c.JSON(http.StatusNotFound, gin.H{"error": err})
@@ -33,7 +34,17 @@ func GetRecipeByMealID(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"recipe": recipe})
+	ingredientsList := strings.Split(recipe.Ingredients, ";")
+	prepList := strings.Split(recipe.Preparation, ";")
+
+	res := model.GetRecipeResponse{
+		ID:          recipe.ID,
+		Name:        recipe.Name,
+		Ingredients: ingredientsList,
+		Preparation: prepList,
+	}
+
+	c.JSON(http.StatusOK, gin.H{"recipe": res})
 	return
 }
 
@@ -51,15 +62,8 @@ func UpdateRecipeByMealID(c *gin.Context) {
 		return
 	}
 
-	ingredients := ""
-	for _, ingredient := range recipeReq.Ingredients {
-		ingredients = ingredients + ";" + ingredient
-	}
-
-	steps := ""
-	for _, prep := range recipeReq.Preparation {
-		steps = steps + ";" + prep
-	}
+	ingredients := strings.Join(recipeReq.Ingredients, ";")
+	steps := strings.Join(recipeReq.Preparation, ";")
 
 	recipe := model.Recipe{
 		ID:          recipeReq.ID,

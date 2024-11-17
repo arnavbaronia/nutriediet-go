@@ -56,4 +56,10 @@ func UserRoutes(incomingRoutes *gin.Engine) {
 	incomingRoutes.POST("/admin/diet_templates/update", adminController.UpdateDietTemplate)
 	incomingRoutes.POST("/admin/diet_templates/:diet_template_id/delete", adminController.DeleteDietTemplateByID)
 
+	// ADMIN - RECIPES
+	incomingRoutes.GET("/admin/recipe/:meal_id", adminController.GetRecipeByMealID)
+	incomingRoutes.POST("/admin/recipe/:meal_id", adminController.UpdateRecipeByMealID)
+	incomingRoutes.POST("/admin/recipe/new", adminController.CreateRecipeByMealID)
+	incomingRoutes.POST("/admin/recipe/:meal_id/delete", adminController.DeleteRecipeByMealID)
+
 }

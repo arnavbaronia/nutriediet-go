@@ -25,3 +25,10 @@ type UpdateRecipeRequest struct {
 	Ingredients []string
 	Preparation []string
 }
+
+type GetRecipeResponse struct {
+	ID          uint
+	Name        string
+	Ingredients []string
+	Preparation []string
+}
