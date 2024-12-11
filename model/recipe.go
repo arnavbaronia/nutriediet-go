@@ -32,3 +32,8 @@ type GetRecipeResponse struct {
 	Ingredients []string
 	Preparation []string
 }
+
+type GetListOfRecipesResponse struct {
+	Name     string
+	RecipeID uint
+}

@@ -139,3 +139,28 @@ func DeleteRecipeByMealID(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"success": true})
 	return
 }
+
+func GetListOfRecipes(c *gin.Context) {
+	if !helpers.CheckUserType(c, "ADMIN") {
+		fmt.Errorf("error: client user not allowed to access")
+		c.JSON(http.StatusUnauthorized, gin.H{"err": "unauthorized access by client"})
+		return
+	}
+	db := database.DB
+	var recipes []model.Recipe
+	if err := db.Find(&recipes).Error; err != nil {
+		fmt.Errorf("error: GetListOfRecipes | could not find recipes: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	res := []model.GetListOfRecipesResponse{}
+	for _, recipe := range recipes {
+		res = append(res, model.GetListOfRecipesResponse{
+			Name:     recipe.Name,
+			RecipeID: recipe.ID,
+		})
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "list": res})
+	return
+}
