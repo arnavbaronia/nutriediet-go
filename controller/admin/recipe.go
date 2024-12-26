@@ -82,7 +82,7 @@ func UpdateRecipeByMealID(c *gin.Context) {
 	return
 }
 
-func CreateRecipeByMealID(c *gin.Context) {
+func CreateRecipe(c *gin.Context) {
 	if !helpers.CheckUserType(c, "ADMIN") {
 		fmt.Errorf("error: client user not allowed to access")
 		c.JSON(http.StatusUnauthorized, gin.H{"err": "unauthorized access by client"})

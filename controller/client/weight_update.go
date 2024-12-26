@@ -116,7 +116,9 @@ func IsWeightUpdationAllowed(clientId string) (bool, error) {
 		return false, err
 	}
 
+	// Weight updation only allowed after 4 days of latest diet given
 	allowedUpdationDate := date.Add(time.Hour * 24 * 4)
+	allowedUpdationDate = time.Date(allowedUpdationDate.Year(), allowedUpdationDate.Month(), allowedUpdationDate.Day(), 0, 0, 0, 0, time.UTC)
 	currentDate := time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, date.Location())
 	if currentDate.Before(allowedUpdationDate) {
 		return false, nil

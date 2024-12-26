@@ -59,7 +59,7 @@ func UserRoutes(incomingRoutes *gin.Engine) {
 	// ADMIN - RECIPES
 	incomingRoutes.GET("/admin/recipe/:meal_id", adminController.GetRecipeByMealID)
 	incomingRoutes.POST("/admin/recipe/:meal_id", adminController.UpdateRecipeByMealID)
-	incomingRoutes.POST("/admin/recipe/new", adminController.CreateRecipeByMealID)
+	incomingRoutes.POST("/admin/recipe/new", adminController.CreateRecipe)
 	incomingRoutes.POST("/admin/recipe/:meal_id/delete", adminController.DeleteRecipeByMealID)
 	incomingRoutes.GET("/admin/recipes", adminController.GetListOfRecipes)
 }
