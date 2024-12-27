@@ -13,3 +13,8 @@ type Exercise struct {
 	UpdatedAt   *time.Time `gorm:"column:updated_at;type:timestamp not null;default:CURRENT_TIMESTAMP;" json:"updated_at"`
 	DeletedAt   *time.Time `gorm:"column:deleted_at;type:timestamp;default:NULL;" json:"deleted_at,omitempty"`
 }
+
+type GetListOfExercisesResponse struct {
+	Name string
+	ID   uint
+}
