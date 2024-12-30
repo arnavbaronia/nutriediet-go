@@ -46,6 +46,10 @@ func UserRoutes(incomingRoutes *gin.Engine) {
 	incomingRoutes.POST("/admin/client/:client_id", adminController.UpdateClientInfo)
 	incomingRoutes.POST("/admin/client/:client_id/activation", adminController.ActivateOrDeactivateClientAccount)
 
+	// ADMIN - DIET
+	incomingRoutes.GET("/admin/meal_list", adminController.GetMealList)
+	incomingRoutes.GET("/admin/quantity_list", adminController.GetQuantityList)
+
 	// <<<<<<<<===============================================================================>>>>>>
 	// EMAIL-BASED PROFILE CREATION (Separate from client routes to avoid conflicts)
 	incomingRoutes.POST("/users/:email/create_profile", clientController.CreateProfileByClient)

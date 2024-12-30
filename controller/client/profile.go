@@ -182,3 +182,20 @@ func CreateProfileByClient(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"isActive": false, "client": req})
 	return
 }
+
+func HasClientCreatedProfile(c *gin.Context) {
+	db := database.DB
+
+	client := model.Client{}
+	err := db.Where("id = ?", c.Param("client_id")).First(client).Error
+	if errors.Is(gorm.ErrRecordNotFound, err) {
+		c.JSON(http.StatusOK, gin.H{"profile_created": false, "is_active": false})
+		return
+	} else if err != nil {
+		fmt.Errorf("error: could not fetch client's profile information in database client_id: %s | err: %v", c.Param("client_id"), err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	}
+
+	c.JSON(http.StatusOK, gin.H{"profile_created": true, "is_active": client.IsActive})
+	return
+}
