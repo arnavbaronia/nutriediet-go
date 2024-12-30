@@ -34,6 +34,7 @@ func UserRoutes(incomingRoutes *gin.Engine) {
 	// CLIENT - PROFILE
 	incomingRoutes.POST("/clients/:client_id/my_profile", clientController.UpdateProfileByClient)
 	incomingRoutes.GET("/clients/:client_id/my_profile", clientController.GetProfileForClient)
+	incomingRoutes.GET("/clients/:client_id/profile_created", clientController.HasClientCreatedProfile)
 
 	// CLIENT - RECIPE
 	incomingRoutes.GET(":meal_id/recipe", clientController.GetRecipeByMealIDForClient)

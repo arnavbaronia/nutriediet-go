@@ -72,6 +72,7 @@ func Login(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
+		"name":         dbRecord.FirstName + " " + dbRecord.LastName,
 		"email":        dbRecord.Email,
 		"success":      true,
 		"token":        token,
