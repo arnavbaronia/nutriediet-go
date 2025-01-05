@@ -156,6 +156,7 @@ func migrateClientInfoForAdmin(updatedInfo model.Client, existingInfo model.Clie
 		DietRecall:        updatedInfo.DietRecall,
 		IsActive:          updatedInfo.IsActive,
 		Locality:          updatedInfo.Locality,
+		CreatedAt:         updatedInfo.CreatedAt,
 	}
 	client.NextPaymentDate = client.LastPaymentDate.AddDate(0, 0, constants.PackageDayMap[updatedInfo.Package])
 	return client

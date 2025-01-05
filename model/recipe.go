@@ -20,10 +20,10 @@ type CreateRecipeRequest struct {
 }
 
 type UpdateRecipeRequest struct {
-	ID          uint
-	Name        string
-	Ingredients []string
-	Preparation []string
+	MealID      uint     `json:"meal_id,omitempty"`
+	Name        string   `json:"name,omitempty"`
+	Ingredients []string `json:"ingredients,omitempty"`
+	Preparation []string `json:"preparation,omitempty"`
 }
 
 type GetRecipeResponse struct {

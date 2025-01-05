@@ -99,8 +99,12 @@ func CreateNewMeal(c *gin.Context) {
 			Ingredients: ingredients,
 			Preparation: steps,
 		}).Error; err != nil {
-
+			fmt.Errorf("error: CreateNewMeal | error saving recipe %v | err : %v", meal, err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+			return
 		}
 	}
 
+	c.JSON(http.StatusOK, gin.H{"data": mealReq})
+	return
 }

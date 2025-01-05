@@ -105,7 +105,7 @@ func UpdateDietTemplate(c *gin.Context) {
 	}
 
 	db := database.DB
-	err := db.Table("diet_templates").Save(&template).Error
+	err := db.Table("diet_templates").Where("id = ?", c.Param("diet_template_id")).Select("name", "diet").Updates(&template).Error
 	if err != nil {
 		fmt.Errorf("error: could not update dietTemplate %v for UpdateDietTemplateByID | err: %v", template, err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

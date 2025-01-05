@@ -94,7 +94,7 @@ func UpdateExerciseByID(c *gin.Context) {
 	}
 
 	db := database.DB
-	if err := db.Save(&exercise).Error; err != nil {
+	if err := db.Model(&model.Exercise{}).Where("id = ?", c.Param("exercise_id")).Select("name", "description", "link").Updates(exercise).Error; err != nil {
 		fmt.Errorf("error: UpdateExerciseByID | could not update exercise %v | err: %v", exercise, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -111,7 +111,7 @@ func DeleteExerciseByID(c *gin.Context) {
 	}
 
 	db := database.DB
-	if err := db.Where("id = ?", c.Param("exercise_id")).Update("deleted_at", time.Now()).Error; err != nil {
+	if err := db.Model(&model.Exercise{}).Where("id = ?", c.Param("exercise_id")).Update("deleted_at", time.Now()).Error; err != nil {
 		fmt.Errorf("error: DeleteExerciseByID | could not delete exercise with id: %v| err: %v", c.Param("exercise_id"), err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

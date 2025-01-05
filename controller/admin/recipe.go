@@ -66,13 +66,13 @@ func UpdateRecipeByMealID(c *gin.Context) {
 	steps := strings.Join(recipeReq.Preparation, ";")
 
 	recipe := model.Recipe{
-		ID:          recipeReq.ID,
+		ID:          recipeReq.MealID,
 		Name:        recipeReq.Name,
 		Ingredients: ingredients,
 		Preparation: steps,
 	}
 	db := database.DB
-	if err := db.Save(&recipe).Error; err != nil {
+	if err := db.Model(&model.Recipe{}).Where("id = ?", c.Param("meal_id")).Select("name", "ingredients", "preparation").Updates(&recipe).Error; err != nil {
 		fmt.Errorf("error: UpdateRecipeByMealID | could not save recipe %v | err: %v", recipe, err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -130,7 +130,7 @@ func DeleteRecipeByMealID(c *gin.Context) {
 	}
 
 	db := database.DB
-	if err := db.Where("meal_id = ?", c.Param("meal_id")).Update("deleted_at", time.Now()).Error; err != nil {
+	if err := db.Model(&model.Recipe{}).Where("meal_id = ?", c.Param("meal_id")).Update("deleted_at", time.Now()).Error; err != nil {
 		fmt.Errorf("error: DeleteRecipeByMealID | could not delete recipe with meal_id: %v | err: %v", c.Param("meal_id"), err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
