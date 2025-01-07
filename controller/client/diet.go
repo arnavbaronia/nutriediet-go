@@ -3,11 +3,12 @@ package client
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
+
 	"github.com/cd-Ishita/nutriediet-go/database"
 	"github.com/cd-Ishita/nutriediet-go/middleware"
 	"github.com/cd-Ishita/nutriediet-go/model"
 	"github.com/gin-gonic/gin"
-	"net/http"
 )
 
 const (
@@ -17,9 +18,15 @@ const (
 )
 
 func GetRegularDietForClient(c *gin.Context) {
-	isAllowed, isActive := middleware.ClientAuthentication(c.Param("email"), c.Param("client_id"))
+	email := c.GetString("email") // Extract email from middleware
+	clientID := c.Param("client_id")
+
+	isAllowed, isActive := middleware.ClientAuthentication(email, clientID)
 	if !isAllowed {
-		c.JSON(http.StatusUnauthorized, gin.H{"clientEmail": c.Param("email"), "requestClientID": c.Param("client_id")})
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"clientEmail":     email,
+			"requestClientID": clientID,
+		})
 		return
 	}
 
@@ -28,9 +35,9 @@ func GetRegularDietForClient(c *gin.Context) {
 		return
 	}
 
-	diet, err := getDietForClient(c.Param("client_id"), TypeDiet)
+	diet, err := getDietForClient(clientID, TypeDiet)
 	if err != nil {
-		fmt.Errorf("error finding diet for client_id: %s", c.Param("client_id"))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "unable to fetch diet"})
 		return
 	}
 

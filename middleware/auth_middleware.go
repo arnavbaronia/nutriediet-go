@@ -3,11 +3,12 @@ package middleware
 import (
 	"errors"
 	"fmt"
+	"net/http"
+	"strings"
+
 	"github.com/cd-Ishita/nutriediet-go/database"
 	"github.com/cd-Ishita/nutriediet-go/model"
 	"gorm.io/gorm"
-	"net/http"
-	"strings"
 
 	"github.com/cd-Ishita/nutriediet-go/helpers"
 	"github.com/gin-gonic/gin"

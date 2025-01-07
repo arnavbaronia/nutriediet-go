@@ -3,13 +3,15 @@ package admin
 import (
 	"errors"
 	"fmt"
+	"net/http"
+	"strconv"
+
 	"github.com/cd-Ishita/nutriediet-go/constants"
 	"github.com/cd-Ishita/nutriediet-go/database"
 	"github.com/cd-Ishita/nutriediet-go/helpers"
 	"github.com/cd-Ishita/nutriediet-go/model"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
-	"net/http"
 )
 
 func GetAllClients(c *gin.Context) {
@@ -173,25 +175,31 @@ func ActivateOrDeactivateClientAccount(c *gin.Context) {
 	}
 
 	// Check if user exists
-	client := model.Client{}
-	err := db.Table("clients").Where("id = ?", c.Param("client_id")).First(&client).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		fmt.Errorf("error: client does not exist with id %s", c.Param("client_id"))
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	} else if err != nil {
-		fmt.Errorf("error: could not fetch client with id %s | %v", c.Param("client_id"), err)
-		c.JSON(http.StatusInternalServerError, gin.H{"err": err})
+	clientID, err := strconv.Atoi(c.Param("client_id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid client ID"})
 		return
 	}
 
-	err = db.Where("client_id = ?", c.Param("client_id")).UpdateColumn("is_active", !client.IsActive).Error
+	// Check if the client exists
+	client := model.Client{}
+	err = db.Table("clients").Where("id = ?", clientID).First(&client).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		fmt.Errorf("error: client does not exist with id %d", clientID)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "client not found"})
+		return
+	} else if err != nil {
+		fmt.Errorf("error: could not fetch client with id %d | %v", clientID, err)
+		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+		return
+	}
+
+	err = db.Table("clients").Where("id = ?", clientID).UpdateColumn("is_active", !client.IsActive).Error
 	if err != nil {
-		fmt.Errorf("error: could not update activation value for client with id %s | err: %v", c.Param("client_id"), err)
-		c.JSON(http.StatusInternalServerError, gin.H{"err": err})
+		fmt.Errorf("error: could not update activation value for client with id %d | err: %v", clientID, err)
+		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"success": true})
-	return
 }
