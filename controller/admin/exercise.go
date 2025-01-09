@@ -3,16 +3,17 @@ package admin
 import (
 	"errors"
 	"fmt"
+	"net/http"
+	"time"
+
 	"github.com/cd-Ishita/nutriediet-go/database"
 	"github.com/cd-Ishita/nutriediet-go/helpers"
 	"github.com/cd-Ishita/nutriediet-go/model"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
-	"net/http"
-	"time"
 )
 
-// GetListOfExercises Used to populate the drop-down menu
+// GetListOfExercises used to populate the drop-down menu
 func GetListOfExercises(c *gin.Context) {
 	if !helpers.CheckUserType(c, "ADMIN") {
 		fmt.Errorf("error: client user not allowed to access")
@@ -22,7 +23,7 @@ func GetListOfExercises(c *gin.Context) {
 	db := database.DB
 
 	var exercises []model.GetListOfExercisesResponse
-	if err := db.Table("exercises").Find(&exercises).Error; err != nil {
+	if err := db.Table("exercises").Where("deleted_at is NULL").Find(&exercises).Error; err != nil {
 		fmt.Errorf("error: GetListOfExercises | could not find exercises: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
