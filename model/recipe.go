@@ -14,9 +14,10 @@ type Recipe struct {
 }
 
 type CreateRecipeRequest struct {
-	Name        string
-	Ingredients []string
-	Preparation []string
+	Name        string   `json:"name,omitempty"`
+	Ingredients []string `json:"ingredients,omitempty"`
+	Preparation []string `json:"preparation,omitempty"`
+	MealID      int      `json:"meal_id,omitempty"`
 }
 
 type UpdateRecipeRequest struct {

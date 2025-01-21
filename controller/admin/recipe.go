@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -107,6 +108,7 @@ func CreateRecipe(c *gin.Context) {
 	}
 
 	recipe := model.Recipe{
+		MealID:      recipeReq.MealID,
 		Name:        recipeReq.Name,
 		Ingredients: ingredients,
 		Preparation: steps,
@@ -129,8 +131,14 @@ func DeleteRecipeByMealID(c *gin.Context) {
 		return
 	}
 
+	mealID, err := strconv.Atoi(c.Param("meal_id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid meal ID"})
+		return
+	}
+
 	db := database.DB
-	if err := db.Model(&model.Recipe{}).Where("meal_id = ?", c.Param("meal_id")).Update("deleted_at", time.Now()).Error; err != nil {
+	if err := db.Model(&model.Recipe{}).Where("food_id = ?", mealID).Update("deleted_at", time.Now()).Error; err != nil {
 		fmt.Errorf("error: DeleteRecipeByMealID | could not delete recipe with meal_id: %v | err: %v", c.Param("meal_id"), err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

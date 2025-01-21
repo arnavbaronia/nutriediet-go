@@ -71,6 +71,17 @@ func Login(c *gin.Context) {
 		return
 	}
 
+	isActive := true
+	if user.UserType == "CLIENT" {
+		client := model.Client{}
+		if err := db.Where("email = ?", user.Email).First(&client).Error; err != nil {
+			fmt.Errorf("error: cannot find client for email: %s and user_type: %s", user.Email, user.UserType)
+			c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+			return
+		}
+		isActive = client.IsActive
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"name":         dbRecord.FirstName + " " + dbRecord.LastName,
 		"email":        dbRecord.Email,
@@ -79,6 +90,7 @@ func Login(c *gin.Context) {
 		"refreshToken": refreshToken,
 		"user_type":    dbRecord.UserType,
 		"id":           dbRecord.ID,
+		"is_active":    isActive,
 	})
 	return
 }
