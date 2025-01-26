@@ -72,6 +72,7 @@ func Login(c *gin.Context) {
 	}
 
 	isActive := true
+	clientID := uint64(0)
 	if user.UserType == "CLIENT" {
 		client := model.Client{}
 		if err := db.Where("email = ?", user.Email).First(&client).Error; err != nil {
@@ -80,6 +81,7 @@ func Login(c *gin.Context) {
 			return
 		}
 		isActive = client.IsActive
+		clientID = client.ID
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -89,7 +91,7 @@ func Login(c *gin.Context) {
 		"token":        token,
 		"refreshToken": refreshToken,
 		"user_type":    dbRecord.UserType,
-		"id":           dbRecord.ID,
+		"client_id":    clientID,
 		"is_active":    isActive,
 	})
 	return
