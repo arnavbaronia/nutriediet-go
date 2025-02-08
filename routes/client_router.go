@@ -35,6 +35,8 @@ func UserRoutes(incomingRoutes *gin.Engine) {
 	incomingRoutes.POST("/clients/:client_id/my_profile", clientController.UpdateProfileByClient)
 	incomingRoutes.GET("/clients/:client_id/my_profile", clientController.GetProfileForClient)
 	incomingRoutes.GET("/clients/:client_id/profile_created", clientController.HasClientCreatedProfile)
+	// EMAIL-BASED PROFILE CREATION (Separate from client routes to avoid conflicts)
+	incomingRoutes.POST("/users/:email/create_profile", clientController.CreateProfileByClient)
 
 	// CLIENT - RECIPE
 	incomingRoutes.GET(":meal_id/recipe", clientController.GetRecipeByMealIDForClient)
@@ -52,8 +54,7 @@ func UserRoutes(incomingRoutes *gin.Engine) {
 	incomingRoutes.GET("/admin/quantity_list", adminController.GetQuantityList)
 
 	// <<<<<<<<===============================================================================>>>>>>
-	// EMAIL-BASED PROFILE CREATION (Separate from client routes to avoid conflicts)
-	incomingRoutes.POST("/users/:email/create_profile", clientController.CreateProfileByClient)
+
 	// ADMIN - DIET TEMPLATES
 	incomingRoutes.GET("/admin/diet_templates", adminController.GetDietTemplatesList)
 	incomingRoutes.GET("/admin/diet_templates/:diet_template_id", adminController.GetDietTemplateByID)

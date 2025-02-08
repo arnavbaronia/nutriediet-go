@@ -73,26 +73,37 @@ func Login(c *gin.Context) {
 
 	isActive := true
 	clientID := uint64(0)
+	firstTimeLogin := false
 	if user.UserType == "CLIENT" {
 		client := model.Client{}
-		if err := db.Where("email = ?", user.Email).First(&client).Error; err != nil {
+		err := db.Where("email = ?", user.Email).First(&client).Error
+		fmt.Println("client %v | err %v", client, err)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			fmt.Println("error: cannot find a record for email: %s and user_type: %s", user.Email, user.UserType)
+			isActive = false
+			firstTimeLogin = true
+		} else if err != nil {
 			fmt.Errorf("error: cannot find client for email: %s and user_type: %s", user.Email, user.UserType)
 			c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
 			return
+		} else {
+			fmt.Errorf("error")
+			isActive = client.IsActive
+			clientID = client.ID
 		}
-		isActive = client.IsActive
-		clientID = client.ID
 	}
 
+	fmt.Println("stupid")
 	c.JSON(http.StatusOK, gin.H{
-		"name":         dbRecord.FirstName + " " + dbRecord.LastName,
-		"email":        dbRecord.Email,
-		"success":      true,
-		"token":        token,
-		"refreshToken": refreshToken,
-		"user_type":    dbRecord.UserType,
-		"client_id":    clientID,
-		"is_active":    isActive,
+		"name":             dbRecord.FirstName + " " + dbRecord.LastName,
+		"email":            dbRecord.Email,
+		"success":          true,
+		"token":            token,
+		"refreshToken":     refreshToken,
+		"user_type":        dbRecord.UserType,
+		"client_id":        clientID,
+		"is_active":        isActive,
+		"first_time_login": firstTimeLogin,
 	})
 	return
 }

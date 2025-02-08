@@ -1,7 +1,7 @@
 package database
 
 import (
-	"gorm.io/driver/postgres"
+	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"log"
 )
@@ -9,8 +9,10 @@ import (
 var DB *gorm.DB
 
 func ConnectToDB() {
-	dsn := "host=rain.db.elephantsql.com user=aaoylwvk password=vPrJ8niX2QnQprwhQW7NJwQS4e6CJDcz dbname=aaoylwvk port=5432 sslmode=disable"
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	// ssh verification is skipped for now, remove before deployment
+	dsn := "avnadmin:AVNS_7QDxgZDlRhQXAx3QV4z@tcp(nutriediet-mysql-ishitagupta-5564.f.aivencloud.com:22013)/defaultdb?tls=skip-verify&parseTime=true"
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+
 	if err != nil {
 		log.Fatal("failed to connect to database")
 	}
