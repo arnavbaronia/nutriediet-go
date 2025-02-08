@@ -13,7 +13,12 @@ import (
 
 func GetRecipeByMealIDForClient(c *gin.Context) {
 	// For Client users, need to check if account is active
-	isActive := middleware.IsClientActive(c.Param("email"))
+	clientEmail := c.GetString("email")
+	isAllowed, isActive := middleware.ClientAuthentication(clientEmail, c.Param("client_id"))
+	if !isAllowed {
+		c.JSON(http.StatusUnauthorized, gin.H{"clientEmail": c.Param("email"), "requestClientID": c.Param("client_id")})
+		return
+	}
 	if !isActive {
 		fmt.Errorf("error: GetRecipeByMealIDForClient | client inactive | clientEmail: %s", c.Param("email"))
 		c.JSON(http.StatusOK, gin.H{"isActive": false})

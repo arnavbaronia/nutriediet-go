@@ -15,7 +15,8 @@ import (
 // this method is triggered by the client
 // TODO: decide is client should be allowed to update profile in deactivated account
 func UpdateProfileByClient(c *gin.Context) {
-	isAllowed, isActive := middleware.ClientAuthentication(c.Param("email"), c.Param("client_id"))
+	clientEmail := c.GetString("email")
+	isAllowed, isActive := middleware.ClientAuthentication(clientEmail, c.Param("client_id"))
 	if !isAllowed {
 		c.JSON(http.StatusUnauthorized, gin.H{"clientEmail": c.Param("email"), "requestClientID": c.Param("client_id")})
 		return
@@ -35,7 +36,6 @@ func UpdateProfileByClient(c *gin.Context) {
 		return
 	}
 
-	fmt.Println(req)
 	client := model.Client{}
 
 	err := db.Table("clients").Where("email = ? and deleted_at IS NULL", req.Email).First(&client).Error
@@ -60,6 +60,18 @@ func UpdateProfileByClient(c *gin.Context) {
 }
 
 func GetProfileForClient(c *gin.Context) {
+	clientEmail := c.GetString("email")
+	isAllowed, isActive := middleware.ClientAuthentication(clientEmail, c.Param("client_id"))
+	if !isAllowed {
+		c.JSON(http.StatusUnauthorized, gin.H{"clientEmail": c.Param("email"), "requestClientID": c.Param("client_id")})
+		return
+	}
+
+	if !isActive {
+		c.JSON(http.StatusOK, gin.H{"isActive": false})
+		return
+	}
+
 	db := database.DB
 
 	client := model.Client{}
@@ -71,18 +83,6 @@ func GetProfileForClient(c *gin.Context) {
 	} else if err != nil {
 		fmt.Println("Error while fetching record from the DB for this client_id: "+c.Param("client_id"), err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	isAllowed, isActive := middleware.ClientAuthentication(client.Email, c.Param("client_id"))
-
-	if !isAllowed {
-		c.JSON(http.StatusUnauthorized, gin.H{"clientEmail": client.Email, "requestClientID": c.Param("client_id")})
-		return
-	}
-
-	if !isActive {
-		c.JSON(http.StatusOK, gin.H{"isActive": false})
 		return
 	}
 

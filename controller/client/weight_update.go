@@ -17,7 +17,7 @@ import (
 // if there is an update from client side, it means
 // no updations allowed after sending diet for 5 days
 func UpdateWeightForClient(c *gin.Context) {
-	isAllowed, isActive := middleware.ClientAuthentication(c.Param("email"), c.Param("client_id"))
+	isAllowed, isActive := middleware.ClientAuthentication(c.GetString("email"), c.Param("client_id"))
 	if !isAllowed {
 		c.JSON(http.StatusUnauthorized, gin.H{"clientEmail": c.Param("email"), "requestClientID": c.Param("client_id")})
 		return
@@ -73,7 +73,7 @@ func UpdateWeightForClient(c *gin.Context) {
 }
 
 func WeightUpdationStatus(c *gin.Context) {
-	isAllowed, isActive := middleware.ClientAuthentication(c.Param("email"), c.Param("client_id"))
+	isAllowed, isActive := middleware.ClientAuthentication(c.GetString("email"), c.Param("client_id"))
 	if !isAllowed {
 		c.JSON(http.StatusUnauthorized, gin.H{"clientEmail": c.Param("email"), "requestClientID": c.Param("client_id")})
 		return

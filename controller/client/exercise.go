@@ -10,7 +10,13 @@ import (
 )
 
 func GetExercisesForClient(c *gin.Context) {
-	isAllowed, isActive := middleware.ClientAuthentication(c.Param("email"), c.Param("client_id"))
+	clientEmail, exists := c.Get("email")
+	if !exists {
+		fmt.Errorf("error: UpdateProfileByClient called but no email found: client_id: %s", c.Param("client_id"))
+		c.JSON(http.StatusBadRequest, gin.H{"err": "email not found"})
+		return
+	}
+	isAllowed, isActive := middleware.ClientAuthentication(clientEmail.(string), c.Param("client_id"))
 	if !isAllowed {
 		c.JSON(http.StatusUnauthorized, gin.H{"clientEmail": c.Param("email"), "requestClientID": c.Param("client_id")})
 		return
