@@ -160,7 +160,8 @@ func migrateClientInfoForAdmin(updatedInfo model.Client, existingInfo model.Clie
 		Locality:          updatedInfo.Locality,
 		CreatedAt:         updatedInfo.CreatedAt,
 	}
-	client.NextPaymentDate = client.LastPaymentDate.AddDate(0, 0, constants.PackageDayMap[updatedInfo.Package])
+	nextPaymentDate := client.LastPaymentDate.AddDate(0, 0, constants.PackageDayMap[updatedInfo.Package])
+	client.NextPaymentDate = &nextPaymentDate
 	return client
 }
 

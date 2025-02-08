@@ -3,7 +3,6 @@ package client
 import (
 	"errors"
 	"fmt"
-	"github.com/cd-Ishita/nutriediet-go/constants"
 	"github.com/cd-Ishita/nutriediet-go/database"
 	"github.com/cd-Ishita/nutriediet-go/middleware"
 	"github.com/cd-Ishita/nutriediet-go/model"
@@ -175,7 +174,8 @@ func CreateProfileByClient(c *gin.Context) {
 	client := migrateClientProfileByClientUpdate(req)
 
 	client.IsActive = false
-	client.DateOfJoining = time.Now()
+	timeNow := time.Now()
+	client.DateOfJoining = &timeNow
 	if err = db.Save(&client).Error; err != nil {
 		fmt.Errorf("error: could not save the client's profile information in database | email: %s | err: %v", c.Param("email"), err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
@@ -192,7 +192,6 @@ func migrateClientProfileByClientUpdate(updatedInfo model.Client) model.Client {
 		Age:               updatedInfo.Age,
 		City:              updatedInfo.City,
 		PhoneNumber:       updatedInfo.PhoneNumber,
-		DateOfJoining:     updatedInfo.DateOfJoining,
 		Remarks:           updatedInfo.Remarks,
 		Height:            updatedInfo.Height,
 		StartingWeight:    updatedInfo.StartingWeight,
@@ -205,7 +204,6 @@ func migrateClientProfileByClientUpdate(updatedInfo model.Client) model.Client {
 		DietRecall:        updatedInfo.DietRecall,
 		Locality:          updatedInfo.Locality,
 	}
-	client.NextPaymentDate = client.LastPaymentDate.AddDate(0, 0, constants.PackageDayMap[updatedInfo.Package])
 	return client
 }
 
