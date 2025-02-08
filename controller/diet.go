@@ -2,9 +2,12 @@ package controller
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"github.com/cd-Ishita/nutriediet-go/database"
 	"github.com/cd-Ishita/nutriediet-go/model"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 	"net/http"
 )
 
@@ -24,15 +27,15 @@ func SaveDietForClient(c *gin.Context) {
 	db := database.DB
 	// this is necessary because the client has already updated the weight and their feedback, the diet has to be uploaded in that record only
 	// however, what if client has not updated weight yet?
-	//dietHistoryRecord := model.DietHistory{}
-	//err := db.Where("client_id = ?", c.Param("client_id")).Order("date DESC").First(&dietHistoryRecord).Error
-	//if errors.Is(gorm.ErrRecordNotFound, err) {
-	//	c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
-	//	return
-	//} else if err != nil {
-	//	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-	//	return
-	//}
+	dietHistoryRecord := model.DietHistory{}
+	err := db.Where("client_id = ?", c.Param("client_id")).Order("date DESC").First(&dietHistoryRecord).Error
+	if errors.Is(gorm.ErrRecordNotFound, err) {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	} else if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 
 	dietJSON, err := json.Marshal(schedule.Diet)
 	if err != nil {
@@ -53,7 +56,8 @@ func SaveDietForClient(c *gin.Context) {
 	//	return
 	//}
 
-	//fmt.Println("saving diet", dietHistory.ID)
+	fmt.Println("dietJSON", dietJSON)
+
 	if err = db.Table("diet_histories").Where("id = ?", 6).Update("diet", dietJSON).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

@@ -60,17 +60,6 @@ func UpdateProfileByClient(c *gin.Context) {
 }
 
 func GetProfileForClient(c *gin.Context) {
-	isAllowed, isActive := middleware.ClientAuthentication(c.Param("email"), c.Param("client_id"))
-	if !isAllowed {
-		c.JSON(http.StatusUnauthorized, gin.H{"clientEmail": c.Param("email"), "requestClientID": c.Param("client_id")})
-		return
-	}
-
-	if !isActive {
-		c.JSON(http.StatusOK, gin.H{"isActive": false})
-		return
-	}
-
 	db := database.DB
 
 	client := model.Client{}
@@ -85,6 +74,18 @@ func GetProfileForClient(c *gin.Context) {
 		return
 	}
 
+	isAllowed, isActive := middleware.ClientAuthentication(client.Email, c.Param("client_id"))
+
+	if !isAllowed {
+		c.JSON(http.StatusUnauthorized, gin.H{"clientEmail": client.Email, "requestClientID": c.Param("client_id")})
+		return
+	}
+
+	if !isActive {
+		c.JSON(http.StatusOK, gin.H{"isActive": false})
+		return
+	}
+
 	res := migrateClientProfile(model.Client{}, client)
 	res.ID = client.ID
 	c.JSON(http.StatusOK, gin.H{"isActive": true, "response": res})
@@ -93,10 +94,7 @@ func GetProfileForClient(c *gin.Context) {
 // only the data the client is allowed to update / retrieve is added to the response
 // starting weight is allowed to be updated only during first time, implement how?
 func migrateClientProfile(client, req model.Client) model.Client {
-	// TODO: decide if you can allow a client to change their email id
-	//if req.Email != "" {
-	//	client.Email = req.Email
-	//}
+
 	if req.Name != "" {
 		client.Name = req.Name
 	}
@@ -173,6 +171,7 @@ func CreateProfileByClient(c *gin.Context) {
 
 	client := migrateClientProfileByClientUpdate(req)
 
+	client.Email = user.Email
 	client.IsActive = false
 	timeNow := time.Now()
 	client.DateOfJoining = &timeNow
@@ -182,7 +181,7 @@ func CreateProfileByClient(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"isActive": false, "client": req})
+	c.JSON(http.StatusOK, gin.H{"isActive": false, "client": client})
 	return
 }
 
