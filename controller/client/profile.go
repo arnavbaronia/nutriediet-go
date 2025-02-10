@@ -181,6 +181,21 @@ func CreateProfileByClient(c *gin.Context) {
 		return
 	}
 
+	// create a new record for the weight in diet histories using the starting weight
+	if client.StartingWeight != 0.0 {
+		dietHistory := model.DietHistory{
+			Date:       time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC),
+			WeekNumber: 0,
+			ClientID:   client.ID,
+			Weight:     client.StartingWeight,
+		}
+		if err = db.Save(&dietHistory).Error; err != nil {
+			fmt.Errorf("error: could not save the client's dietHistory information in database | email: %s | err: %v", c.Param("email"), err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+			return
+		}
+	}
+
 	c.JSON(http.StatusOK, gin.H{"isActive": false, "client": client})
 	return
 }
