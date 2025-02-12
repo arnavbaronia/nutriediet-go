@@ -77,12 +77,26 @@ func CreateDietTemplate(c *gin.Context) {
 	}
 
 	db := database.DB
-	err := db.Table("diet_templates").Save(&model.DietTemplate{
-		Diet: template.Diet, Name: template.Name,
-	}).Error
+	dietTemplate := model.DietTemplate{
+		Name: template.Name,
+	}
+	err := db.Table("diet_templates").Save(&dietTemplate).Error
 	if err != nil {
 		fmt.Errorf("error: could not save dietTemplate %v for CreateDietTemplate | err: %v", template, err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	dietJSON, err := json.Marshal(template.Diet)
+	if err != nil {
+		fmt.Errorf("error: could not marshal diet to json for CreateDietTemplate | err: %v", err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to marshal diet to JSON"})
+		return
+	}
+
+	if err := db.Table("diet_templates").Where("id = ?", dietTemplate.ID).Update("diet", dietJSON).Error; err != nil {
+		fmt.Errorf("error: could not save template for CreateDietTemplate | err: %v", err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save template for CreateDietTemplate"})
 		return
 	}
 

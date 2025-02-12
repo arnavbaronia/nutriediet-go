@@ -3,9 +3,9 @@ package model
 import "time"
 
 type DietTemplate struct {
-	ID   uint         `gorm:"primaryKey;autoIncrement:true" json:"id"`
-	Name string       `gorm:"column:name" json:"name,omitempty"`
-	Diet DietSchedule `gorm:"column:diet;type:json" json:"diet,omitempty"`
+	ID   uint          `gorm:"primaryKey;autoIncrement:true" json:"id"`
+	Name string        `gorm:"column:name" json:"name,omitempty"`
+	Diet *DietSchedule `gorm:"column:diet;type:json" json:"diet,omitempty"`
 
 	// POSTGRES fields
 	//CreatedAt *time.Time   `gorm:"column:created_at;type:timestamp not null;default:CURRENT_TIMESTAMP;" json:"created_at"`
