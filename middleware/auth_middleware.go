@@ -16,7 +16,6 @@ import (
 )
 
 func Authenticate(c *gin.Context) {
-	fmt.Println("inside authenticate")
 	authHeader := c.Request.Header.Get("Authorization")
 	if authHeader == "" {
 		fmt.Println("no authorization header received")
@@ -24,8 +23,6 @@ func Authenticate(c *gin.Context) {
 		c.Abort()
 		return
 	}
-
-	fmt.Println("auth header:", authHeader)
 
 	parts := strings.Split(authHeader, " ")
 	if len(parts) != 2 || parts[0] != "Bearer" {
@@ -35,7 +32,6 @@ func Authenticate(c *gin.Context) {
 		return
 	}
 
-	fmt.Println("auth header:", parts[1])
 	clientToken := parts[1]
 	claims, err := helpers.ValidateToken(clientToken)
 	if err != nil {
@@ -45,7 +41,6 @@ func Authenticate(c *gin.Context) {
 		return
 	}
 
-	fmt.Println("claims:", claims)
 	// setting context with this information
 	c.Set("email", claims.Email)
 	c.Set("first_name", claims.FirstName)

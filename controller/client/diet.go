@@ -1,7 +1,9 @@
 package client
 
 import (
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -69,18 +71,23 @@ func getDietForClient(clientId, dietType string) (model.DietSchedule, error) {
 
 	// Retrieve the latest diet history record for the client
 
-	var dietJSON []string
+	var dietJSON []sql.NullString
 	err := db.Model(&model.DietHistory{}).
 		Where("client_id = ? and diet_type = ?", clientId, dietType).
 		Order("date DESC").
+		Limit(1).
 		Pluck("diet", &dietJSON).
 		Error
 	if err != nil {
+		fmt.Errorf("err: %v", err)
 		return model.DietSchedule{}, err
 	}
 
+	if len(dietJSON) == 0 {
+		return model.DietSchedule{}, errors.New("no diet")
+	}
 	dietFinal := model.DietSchedule{}
-	err = json.Unmarshal([]byte(dietJSON[0]), &dietFinal)
+	err = json.Unmarshal([]byte(dietJSON[0].String), &dietFinal)
 	if err != nil {
 		fmt.Println("Error:", err)
 		return model.DietSchedule{}, err

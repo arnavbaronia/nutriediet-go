@@ -101,7 +101,7 @@ func WeightUpdationStatus(c *gin.Context) {
 		return
 	} else {
 		fmt.Println("Weight updation not allowed for client_id: " + c.Param("client_id"))
-		c.JSON(http.StatusNotAcceptable, gin.H{"status": "not_allowed"})
+		c.JSON(http.StatusOK, gin.H{"status": "not_allowed"})
 		return
 	}
 }
