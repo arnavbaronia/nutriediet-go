@@ -171,6 +171,20 @@ func CreateProfileByClient(c *gin.Context) {
 
 	client := migrateClientProfileByClientUpdate(req)
 
+	// check if client with email already exists in clients table
+	dbClient := model.Client{}
+	err = db.Where("email = ?", c.Param("email")).First(&dbClient).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		// new client without a record
+	} else if err != nil {
+		fmt.Errorf("error: could not find client with email %s | err: %v", c.Param("email"), err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		return
+	} else {
+		client.ID = dbClient.ID
+		client.CreatedAt = dbClient.CreatedAt
+	}
+
 	client.Email = user.Email
 	client.IsActive = false
 	timeNow := time.Now()
@@ -188,6 +202,7 @@ func CreateProfileByClient(c *gin.Context) {
 			WeekNumber: 0,
 			ClientID:   client.ID,
 			Weight:     client.StartingWeight,
+			Diet:       nil,
 		}
 		if err = db.Save(&dietHistory).Error; err != nil {
 			fmt.Errorf("error: could not save the client's dietHistory information in database | email: %s | err: %v", c.Param("email"), err)

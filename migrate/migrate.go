@@ -10,8 +10,8 @@ func init() {
 }
 
 func main() {
-	database.DB.AutoMigrate(&model.Client{})
-	//database.DB.AutoMigrate(&model.DietHistory{})
+	//database.DB.AutoMigrate(&model.Client{})
+	database.DB.AutoMigrate(&model.DietHistory{})
 	//database.DB.AutoMigrate(&model.DietTemplate{})
 	//database.DB.AutoMigrate(&model.Recipe{})
 	//database.DB.AutoMigrate(&model.Exercise{})

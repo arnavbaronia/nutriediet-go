@@ -58,7 +58,6 @@ func main() {
 	router.POST("exercise/submit", controller.AddExerciseFromList)
 
 	// ADMIN - DIET
-	router.POST(":client_id/diet", controller.SaveDietForClient)
 
 	router.Run(":" + port) // listen and serve on 0.0.0.0:8081
 }

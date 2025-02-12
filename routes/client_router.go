@@ -52,6 +52,7 @@ func UserRoutes(incomingRoutes *gin.Engine) {
 	// ADMIN - DIET
 	incomingRoutes.GET("/admin/meal_list", adminController.GetMealList)
 	incomingRoutes.GET("/admin/quantity_list", adminController.GetQuantityList)
+	incomingRoutes.POST("/admin/:client_id/diet", adminController.SaveDietForClient)
 
 	// <<<<<<<<===============================================================================>>>>>>
 

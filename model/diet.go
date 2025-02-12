@@ -18,15 +18,15 @@ type DietTemplate struct {
 }
 
 type DietHistory struct {
-	ID         uint         `gorm:"primaryKey;autoIncrement:true" json:"id"`
-	ClientID   uint64       `gorm:"column:client_id;foreignKey:ClientID" json:"client_id,omitempty"`
-	WeekNumber int          `gorm:"column:week_number" json:"week_number,omitempty"`
-	Date       time.Time    `gorm:"column:date" json:"date,omitempty"`
-	Weight     float32      `gorm:"column:weight" json:"weight,omitempty"`
-	Diet       DietSchedule `gorm:"column:diet;type:string" json:"diet,omitempty"`
-	Feedback   string       `gorm:"column:feedback" json:"feedback,omitempty"`
-	Tags       string       `gorm:"column:tags" json:"tags,omitempty"`
-	DietType   uint32       `gorm:"column:diet_type" json:"diet_type,omitempty"`
+	ID         uint          `gorm:"primaryKey;autoIncrement:true" json:"id"`
+	ClientID   uint64        `gorm:"column:client_id;foreignKey:ClientID" json:"client_id,omitempty"`
+	WeekNumber int           `gorm:"column:week_number" json:"week_number,omitempty"`
+	Date       time.Time     `gorm:"column:date" json:"date,omitempty"`
+	Weight     float32       `gorm:"column:weight" json:"weight,omitempty"`
+	Diet       *DietSchedule `gorm:"column:diet;type:string" json:"diet,omitempty"`
+	Feedback   string        `gorm:"column:feedback" json:"feedback,omitempty"`
+	Tags       string        `gorm:"column:tags" json:"tags,omitempty"`
+	DietType   uint32        `gorm:"column:diet_type" json:"diet_type,omitempty"`
 
 	// POSTGRES fields
 	//CreatedAt  *time.Time   `gorm:"column:created_at;type:timestamp not null;default:CURRENT_TIMESTAMP;" json:"created_at"`
