@@ -10,6 +10,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"net/http"
+	"strconv"
+	"time"
 )
 
 func GetDietByDietHistoryID(c *gin.Context) {
@@ -71,25 +73,24 @@ func SaveDietForClient(c *gin.Context) {
 	}
 
 	db := database.DB
-	// this is necessary because the client has already updated the weight and their feedback, the diet has to be uploaded in that record only
-	// however, what if client has not updated weight yet?
-	dietHistoryRecord := model.DietHistory{}
-	err := db.Where("client_id = ?", c.Param("client_id")).Order("date DESC").First(&dietHistoryRecord).Error
-	if errors.Is(gorm.ErrRecordNotFound, err) {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
-		return
-	} else if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
 
+	//dietHistoryRecord := model.DietHistory{}
+	//err := db.Where("client_id = ?", c.Param("client_id")).Order("date DESC").First(&dietHistoryRecord).Error
+	//if errors.Is(gorm.ErrRecordNotFound, err) {
+	//	c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+	//	return
+	//} else if err != nil {
+	//	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	//	return
+	//}
+
+	// a new diet always creates a new record in the diet history table
 	dietJSON, err := json.Marshal(schedule.Diet)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to marshal diet to JSON"})
 		return
 	}
 
-	//clientID, _ := strconv.ParseUint(c.Param("client_id"), 10, 64)
 	//dietHistory := model.DietHistory{
 	//	ClientID:   clientID,
 	//	WeekNumber: schedule.WeekNumber,
@@ -102,9 +103,22 @@ func SaveDietForClient(c *gin.Context) {
 	//	return
 	//}
 
-	fmt.Println("dietJSON", dietJSON)
+	clientID, _ := strconv.ParseUint(c.Param("client_id"), 10, 64)
+	emptyDietRecord := model.DietHistory{
+		WeekNumber: schedule.WeekNumber,
+		ClientID:   clientID,
+		Date:       time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC),
+		Weight:     nil,
+		DietType:   schedule.DietType,
+	}
+	if err := db.Create(&emptyDietRecord).Error; err != nil {
+		fmt.Errorf("error: SaveDietForClient | could not create empty diet_history_id %d for client_id %s | err: %v", schedule.Diet, clientID, err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 
-	if err = db.Table("diet_histories").Where("id = ?", dietHistoryRecord.ID).Update("diet", dietJSON).Error; err != nil {
+	if err = db.Table("diet_histories").Where("id = ?", emptyDietRecord.ID).Update("diet", dietJSON).Error; err != nil {
+		fmt.Errorf("error: SaveDietForClient | could not save diet for diet_history_id %d for client_id %s | err: %v", schedule.Diet, clientID, err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

@@ -48,7 +48,7 @@ func UpdateWeightForClient(c *gin.Context) {
 	}
 
 	dietRecord := model.DietHistory{}
-	err = db.Where("client_id = ?", c.Param("client_id")).Order("date DESC").First(&dietRecord).Error
+	err = db.Table("diet_histories").Where("client_id = ?", c.Param("client_id")).Order("date DESC").Select("id").First(&dietRecord).Error
 	if err != nil {
 		fmt.Println("Could not retrieve diet record for client_id: " + c.Param("client_id"))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -62,8 +62,8 @@ func UpdateWeightForClient(c *gin.Context) {
 		return
 	}
 
-	dietRecord.Weight = req
-	if err = db.Save(&dietRecord).Error; err != nil {
+	dietRecord.Weight = &req
+	if err = db.Table("diet_histories").Where("id = ?", dietRecord.ID).Update("weight", req).Error; err != nil {
 		fmt.Println("Error while saving client diet record", dietRecord)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -110,19 +110,21 @@ func WeightUpdationStatus(c *gin.Context) {
 func IsWeightUpdationAllowed(clientId string) (bool, error) {
 	db := database.DB
 
-	date := time.Time{}
-	err := db.Where("client_id = ?", clientId).Order("date DESC").Select("date").First(&date).Error
+	var date time.Time
+
+	err := db.Table("diet_histories").Select("date").Where("client_id = ?", clientId).Order("date DESC").Limit(1).Find(&date).Error
 	if err != nil {
 		return false, err
 	}
 
 	// Weight updation only allowed after 4 days of latest diet given
-	allowedUpdationDate := date.Add(time.Hour * 24 * 4)
-	allowedUpdationDate = time.Date(allowedUpdationDate.Year(), allowedUpdationDate.Month(), allowedUpdationDate.Day(), 0, 0, 0, 0, time.UTC)
-	currentDate := time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, date.Location())
-	if currentDate.Before(allowedUpdationDate) {
-		return false, nil
-	}
+	// COMMENT OUT - for local testing
+	//allowedUpdationDate := date.Add(time.Hour * 24 * 4)
+	//allowedUpdationDate = time.Date(allowedUpdationDate.Year(), allowedUpdationDate.Month(), allowedUpdationDate.Day(), 0, 0, 0, 0, time.UTC)
+	//currentDate := time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, date.Location())
+	//if currentDate.Before(allowedUpdationDate) {
+	//	return false, nil
+	//}
 
 	return true, nil
 }

@@ -201,7 +201,7 @@ func CreateProfileByClient(c *gin.Context) {
 			Date:       time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC),
 			WeekNumber: 0,
 			ClientID:   client.ID,
-			Weight:     client.StartingWeight,
+			Weight:     &client.StartingWeight,
 			Diet:       nil,
 		}
 		if err = db.Save(&dietHistory).Error; err != nil {

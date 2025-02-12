@@ -22,7 +22,7 @@ type DietHistory struct {
 	ClientID   uint64        `gorm:"column:client_id;foreignKey:ClientID" json:"client_id,omitempty"`
 	WeekNumber int           `gorm:"column:week_number" json:"week_number,omitempty"`
 	Date       time.Time     `gorm:"column:date" json:"date,omitempty"`
-	Weight     float32       `gorm:"column:weight" json:"weight,omitempty"`
+	Weight     *float32      `gorm:"column:weight" json:"weight,omitempty"`
 	Diet       *DietSchedule `gorm:"column:diet;type:string" json:"diet,omitempty"`
 	Feedback   string        `gorm:"column:feedback" json:"feedback,omitempty"`
 	Tags       string        `gorm:"column:tags" json:"tags,omitempty"`
@@ -65,6 +65,7 @@ type DietSchedule struct {
 type SaveDietForClientRequest struct {
 	Diet       DietSchedule
 	WeekNumber int
+	DietType   uint32
 }
 
 type CreateDietTemplateRequest struct {
