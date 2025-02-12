@@ -54,7 +54,7 @@ func ClientAuthentication(emailFromContext string, clientIDFromReq string) (bool
 	// To authenticate, fetch the client_id associated with this email id
 	db := database.DB
 	client := model.Client{}
-	fmt.Println("emailfrom context", emailFromContext)
+
 	err := db.Table("clients").Where("email = ?", emailFromContext).First(&client).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		fmt.Errorf("error: client with email %s does not exist", emailFromContext)

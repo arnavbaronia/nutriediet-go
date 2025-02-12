@@ -48,6 +48,7 @@ func UserRoutes(incomingRoutes *gin.Engine) {
 	incomingRoutes.GET("/admin/client/:client_id", adminController.GetClientInfo)
 	incomingRoutes.POST("/admin/client/:client_id", adminController.UpdateClientInfo)
 	incomingRoutes.POST("/admin/client/:client_id/activation", adminController.ActivateOrDeactivateClientAccount)
+	incomingRoutes.GET("/admin/client/:client_id/weight_history", adminController.GetWeightHistoryForClient)
 
 	// ADMIN - DIET
 	incomingRoutes.GET("/admin/meal_list", adminController.GetMealList)
