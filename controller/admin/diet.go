@@ -4,14 +4,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+	"strconv"
+	"time"
+
 	"github.com/cd-Ishita/nutriediet-go/database"
 	"github.com/cd-Ishita/nutriediet-go/helpers"
 	"github.com/cd-Ishita/nutriediet-go/model"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
-	"net/http"
-	"strconv"
-	"time"
 )
 
 func GetDietByDietHistoryID(c *gin.Context) {
@@ -107,9 +108,9 @@ func SaveDietForClient(c *gin.Context) {
 	emptyDietRecord := model.DietHistory{
 		WeekNumber: schedule.WeekNumber,
 		ClientID:   clientID,
-		Date:       time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.UTC),
-		Weight:     nil,
-		DietType:   schedule.DietType,
+		Date:       time.Now(),
+		Weight:   nil,
+		DietType: schedule.DietType,
 	}
 	if err := db.Create(&emptyDietRecord).Error; err != nil {
 		fmt.Errorf("error: SaveDietForClient | could not create empty diet_history_id %d for client_id %s | err: %v", schedule.Diet, clientID, err.Error())
