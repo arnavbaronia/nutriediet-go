@@ -63,7 +63,7 @@ func UpdateWeightForClient(c *gin.Context) {
 	}
 
 	dietRecord.Weight = &req
-	if err = db.Table("diet_histories").Where("id = ?", dietRecord.ID).Update("weight", req).Error; err != nil {
+	if err = db.Table("diet_histories").Where("id = ? and diet_type = 0", dietRecord.ID).Update("weight", req).Error; err != nil {
 		fmt.Println("Error while saving client diet record", dietRecord)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
