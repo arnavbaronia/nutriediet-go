@@ -44,7 +44,8 @@ func GetRegularDietForClient(c *gin.Context) {
 }
 
 func GetDetoxDietForClient(c *gin.Context) {
-	isAllowed, isActive := middleware.ClientAuthentication(c.Param("email"), c.Param("client_id"))
+	clientEmail := c.GetString("email")
+	isAllowed, isActive := middleware.ClientAuthentication(clientEmail, c.Param("client_id"))
 	if !isAllowed {
 		c.JSON(http.StatusUnauthorized, gin.H{"clientEmail": c.Param("email"), "requestClientID": c.Param("client_id")})
 		return
