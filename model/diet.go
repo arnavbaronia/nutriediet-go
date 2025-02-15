@@ -3,9 +3,10 @@ package model
 import "time"
 
 type DietTemplate struct {
-	ID   uint          `gorm:"primaryKey;autoIncrement:true" json:"id"`
-	Name string        `gorm:"column:name" json:"name,omitempty"`
-	Diet *DietSchedule `gorm:"column:diet;type:json" json:"diet,omitempty"`
+	ID   uint   `gorm:"primaryKey;autoIncrement:true" json:"id"`
+	Name string `gorm:"column:name" json:"name,omitempty"`
+	//Diet *DietSchedule `gorm:"column:diet;type:json" json:"diet,omitempty"`
+	DietString *string `gorm:"column:diet_string;size:1500" json:"diet_string,omitempty"`
 
 	// POSTGRES fields
 	//CreatedAt *time.Time   `gorm:"column:created_at;type:timestamp not null;default:CURRENT_TIMESTAMP;" json:"created_at"`
@@ -18,15 +19,16 @@ type DietTemplate struct {
 }
 
 type DietHistory struct {
-	ID         uint          `gorm:"primaryKey;autoIncrement:true" json:"id"`
-	ClientID   uint64        `gorm:"column:client_id;foreignKey:ClientID" json:"client_id,omitempty"`
-	WeekNumber int           `gorm:"column:week_number" json:"week_number,omitempty"`
-	Date       time.Time     `gorm:"column:date" json:"date,omitempty"`
-	Weight     *float32      `gorm:"column:weight" json:"weight,omitempty"`
-	Diet       *DietSchedule `gorm:"column:diet;type:string" json:"diet,omitempty"`
-	Feedback   string        `gorm:"column:feedback" json:"feedback,omitempty"`
-	Tags       string        `gorm:"column:tags" json:"tags,omitempty"`
-	DietType   uint32        `gorm:"column:diet_type" json:"diet_type,omitempty"`
+	ID         uint      `gorm:"primaryKey;autoIncrement:true" json:"id"`
+	ClientID   uint64    `gorm:"column:client_id;foreignKey:ClientID" json:"client_id,omitempty"`
+	WeekNumber int       `gorm:"column:week_number" json:"week_number,omitempty"`
+	Date       time.Time `gorm:"column:date" json:"date,omitempty"`
+	Weight     *float32  `gorm:"column:weight" json:"weight,omitempty"`
+	//Diet       *DietSchedule `gorm:"column:diet;type:string" json:"diet,omitempty"`
+	DietString *string `gorm:"column:diet_string;size:1500" json:"diet_string,omitempty"`
+	Feedback   string  `gorm:"column:feedback" json:"feedback,omitempty"`
+	Tags       string  `gorm:"column:tags" json:"tags,omitempty"`
+	DietType   uint32  `gorm:"column:diet_type" json:"diet_type,omitempty"`
 
 	// POSTGRES fields
 	//CreatedAt  *time.Time   `gorm:"column:created_at;type:timestamp not null;default:CURRENT_TIMESTAMP;" json:"created_at"`
@@ -63,12 +65,20 @@ type DietSchedule struct {
 }
 
 type SaveDietForClientRequest struct {
-	Diet       DietSchedule
+	//Diet       DietSchedule
+	Diet       string
 	WeekNumber int
 	DietType   uint32
 }
 
 type CreateDietTemplateRequest struct {
-	Diet DietSchedule `json:"diet,omitempty"`
-	Name string       `json:"name,omitempty"`
+	//Diet DietSchedule `json:"diet,omitempty"`
+	Diet string `json:"diet,omitempty""`
+	Name string `json:"name,omitempty"`
+}
+
+type UpdateDietTemplateRequest struct {
+	ID   uint   `json:"id,omitempty"`
+	Diet string `json:"diet,omitempty"`
+	Name string `json:"name,omitempty"`
 }

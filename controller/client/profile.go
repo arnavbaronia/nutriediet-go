@@ -202,7 +202,7 @@ func CreateProfileByClient(c *gin.Context) {
 			WeekNumber: 0,
 			ClientID:   client.ID,
 			Weight:     &client.StartingWeight,
-			Diet:       nil,
+			DietString: nil,
 		}
 		if err = db.Save(&dietHistory).Error; err != nil {
 			fmt.Errorf("error: could not save the client's dietHistory information in database | email: %s | err: %v", c.Param("email"), err)

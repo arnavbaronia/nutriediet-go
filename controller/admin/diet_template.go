@@ -77,28 +77,43 @@ func CreateDietTemplate(c *gin.Context) {
 	}
 
 	db := database.DB
-	dietTemplate := model.DietTemplate{
-		Name: template.Name,
+
+	err := db.Table("diet_templates").Where("deleted_at IS NULL and name = ?", template.Name).First(&model.DietTemplate{}).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		// continue
+	} else if err != nil {
+		fmt.Errorf("error: CreateDietTemplate | could not check for existing diet template with name | err: %v", err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	} else {
+		fmt.Errorf("error: CreateDietTemplate | already exists diet template with name: %s", template.Name)
+		c.JSON(http.StatusConflict, gin.H{"error": "diet template already exists"})
+		return
 	}
-	err := db.Table("diet_templates").Save(&dietTemplate).Error
+
+	dietTemplate := model.DietTemplate{
+		Name:       template.Name,
+		DietString: &template.Diet,
+	}
+	err = db.Table("diet_templates").Save(&dietTemplate).Error
 	if err != nil {
 		fmt.Errorf("error: could not save dietTemplate %v for CreateDietTemplate | err: %v", template, err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	dietJSON, err := json.Marshal(template.Diet)
-	if err != nil {
-		fmt.Errorf("error: could not marshal diet to json for CreateDietTemplate | err: %v", err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to marshal diet to JSON"})
-		return
-	}
-
-	if err := db.Table("diet_templates").Where("id = ?", dietTemplate.ID).Update("diet", dietJSON).Error; err != nil {
-		fmt.Errorf("error: could not save template for CreateDietTemplate | err: %v", err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save template for CreateDietTemplate"})
-		return
-	}
+	//dietJSON, err := json.Marshal(template.Diet)
+	//if err != nil {
+	//	fmt.Errorf("error: could not marshal diet to json for CreateDietTemplate | err: %v", err.Error())
+	//	c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to marshal diet to JSON"})
+	//	return
+	//}
+	//
+	//if err := db.Table("diet_templates").Where("id = ?", dietTemplate.ID).Update("diet", dietJSON).Error; err != nil {
+	//	fmt.Errorf("error: could not save template for CreateDietTemplate | err: %v", err.Error())
+	//	c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save template for CreateDietTemplate"})
+	//	return
+	//}
 
 	c.JSON(http.StatusOK, gin.H{"success": true})
 	return
@@ -111,15 +126,20 @@ func UpdateDietTemplate(c *gin.Context) {
 		return
 	}
 
-	var template model.DietTemplate
+	var template model.UpdateDietTemplateRequest
 	if err := c.BindJSON(&template); err != nil {
 		fmt.Errorf("error: could not extract request from context for UpdateDietTemplateByID | err: %v", err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
+	dietTemplate := model.DietTemplate{
+		Name:       template.Name,
+		DietString: &template.Diet,
+		ID:         template.ID,
+	}
 	db := database.DB
-	err := db.Table("diet_templates").Where("id = ?", c.Param("diet_template_id")).Select("name", "diet").Updates(&template).Error
+	err := db.Table("diet_templates").Where("id = ?", c.Param("diet_template_id")).Select("name", "diet").Updates(&dietTemplate).Error
 	if err != nil {
 		fmt.Errorf("error: could not update dietTemplate %v for UpdateDietTemplateByID | err: %v", template, err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
