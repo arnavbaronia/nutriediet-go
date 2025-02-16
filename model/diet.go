@@ -6,7 +6,7 @@ type DietTemplate struct {
 	ID   uint   `gorm:"primaryKey;autoIncrement:true" json:"id"`
 	Name string `gorm:"column:name" json:"name,omitempty"`
 	//Diet *DietSchedule `gorm:"column:diet;type:json" json:"diet,omitempty"`
-	DietString *string `gorm:"column:diet_string;size:1500" json:"diet_string,omitempty"`
+	DietString *string `gorm:"column:diet_string;size:2500" json:"diet_string,omitempty"`
 
 	// POSTGRES fields
 	//CreatedAt *time.Time   `gorm:"column:created_at;type:timestamp not null;default:CURRENT_TIMESTAMP;" json:"created_at"`
@@ -25,7 +25,7 @@ type DietHistory struct {
 	Date       time.Time `gorm:"column:date" json:"date,omitempty"`
 	Weight     *float32  `gorm:"column:weight" json:"weight,omitempty"`
 	//Diet       *DietSchedule `gorm:"column:diet;type:string" json:"diet,omitempty"`
-	DietString *string `gorm:"column:diet_string;size:1500" json:"diet_string,omitempty"`
+	DietString *string `gorm:"column:diet_string;size:2500" json:"diet_string,omitempty"`
 	Feedback   string  `gorm:"column:feedback" json:"feedback,omitempty"`
 	Tags       string  `gorm:"column:tags" json:"tags,omitempty"`
 	DietType   uint32  `gorm:"column:diet_type" json:"diet_type,omitempty"`
@@ -66,9 +66,9 @@ type DietSchedule struct {
 
 type SaveDietForClientRequest struct {
 	//Diet       DietSchedule
-	Diet       string
-	WeekNumber int
-	DietType   uint32
+	Diet       string `json:"diet,omitempty"`
+	WeekNumber int    `json:"week_number,omitempty"`
+	DietType   uint32 `json:"diet_type,omitempty"`
 }
 
 type CreateDietTemplateRequest struct {
@@ -81,4 +81,9 @@ type UpdateDietTemplateRequest struct {
 	ID   uint   `json:"id,omitempty"`
 	Diet string `json:"diet,omitempty"`
 	Name string `json:"name,omitempty"`
+}
+
+type GetDietHistoryForClientResponse struct {
+	WeekNumber int    `json:"week_number,omitempty"`
+	Diet       string `json:"diet,omitempty"`
 }

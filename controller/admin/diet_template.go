@@ -30,7 +30,26 @@ func GetDietTemplatesList(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"list": dietTemplates})
+	// transform the results into usable format
+	var res []struct {
+		ID   uint
+		Name string
+		Diet string
+	}
+
+	for _, dietTemplate := range dietTemplates {
+		res = append(res, struct {
+			ID   uint
+			Name string
+			Diet string
+		}{
+			ID:   dietTemplate.ID,
+			Name: dietTemplate.Name,
+			Diet: *dietTemplate.DietString,
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{"list": res})
 	return
 }
 
@@ -139,7 +158,7 @@ func UpdateDietTemplate(c *gin.Context) {
 		ID:         template.ID,
 	}
 	db := database.DB
-	err := db.Table("diet_templates").Where("id = ?", c.Param("diet_template_id")).Select("name", "diet").Updates(&dietTemplate).Error
+	err := db.Table("diet_templates").Where("id = ? and deleted_at IS NULL", c.Param("diet_template_id")).Select("name", "diet").Updates(&dietTemplate).Error
 	if err != nil {
 		fmt.Errorf("error: could not update dietTemplate %v for UpdateDietTemplateByID | err: %v", template, err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

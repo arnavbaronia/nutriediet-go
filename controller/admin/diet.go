@@ -1,7 +1,6 @@
 package admin
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/cd-Ishita/nutriediet-go/database"
@@ -14,41 +13,37 @@ import (
 	"time"
 )
 
-func GetDietByDietHistoryID(c *gin.Context) {
+func GetDietHistoryForClient(c *gin.Context) {
 	if !helpers.CheckUserType(c, "ADMIN") {
 		fmt.Errorf("error: client user not allowed to access")
 		c.JSON(http.StatusUnauthorized, gin.H{"err": "unauthorized access by client"})
 		return
 	}
 
-	var dietHistoryID uint64
-	if err := c.BindJSON(&dietHistoryID); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
 	db := database.DB
 
-	var dietJSON []string
-	err := db.Model(&model.DietHistory{}).Where("client_id = ? and id = ?", c.Param("client_id"), dietHistoryID).Pluck("diet", &dietJSON).Error
+	var dietHistory []model.DietHistory
+	err := db.Model(&model.DietHistory{}).Where("client_id = ? and deleted_at IS NULL and week_number > 0", c.Param("client_id")).Select("diet_string", "week_number").Find(&dietHistory).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		fmt.Errorf("error: diet does not exist with diet history id %d", dietHistoryID)
+		fmt.Errorf("error: diet does not exist for client_id %d", c.Param("client_id"))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	} else if err != nil {
-		fmt.Errorf("error: could not fetch diet with diet_history_id %d for client_id %s", dietHistoryID, c.Param("client_id"))
+		fmt.Errorf("error: could not fetch diet for client_id %s", c.Param("client_id"))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	dietFinal := model.DietSchedule{}
-	err = json.Unmarshal([]byte(dietJSON[0]), &dietFinal)
-	if err != nil {
-		fmt.Println("Error:", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+	// transform the results into given format
+	res := []model.GetDietHistoryForClientResponse{}
+	for _, diet := range dietHistory {
+		res = append(res, model.GetDietHistoryForClientResponse{
+			WeekNumber: diet.WeekNumber,
+			Diet:       *diet.DietString,
+		})
 	}
-	c.JSON(http.StatusOK, gin.H{"diet": dietFinal})
+
+	c.JSON(http.StatusOK, gin.H{"diet_history": res})
 	return
 }
 
@@ -104,8 +99,24 @@ func SaveDietForClient(c *gin.Context) {
 	//}
 
 	clientID, _ := strconv.ParseUint(c.Param("client_id"), 10, 64)
+
+	// fetch the week_number of the last diet sent
+	var weekNumber int
+	err := db.Model(&model.DietHistory{}).
+		Where("client_id = ? and diet_type = ?", clientID, 0).
+		Select("week_number").
+		Order("date DESC").
+		Limit(1).
+		Find(&weekNumber).
+		Error
+	if err != nil {
+		fmt.Errorf("err: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
 	dietRecord := model.DietHistory{
-		WeekNumber: schedule.WeekNumber,
+		WeekNumber: weekNumber + 1,
 		ClientID:   clientID,
 		Date:       time.Now(),
 		Weight:     nil,
