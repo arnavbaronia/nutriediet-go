@@ -74,7 +74,7 @@ func getDietForClient(clientId, dietType string) (*string, error) {
 	var diet sql.NullString
 	err := db.Model(&model.DietHistory{}).
 		Where("client_id = ? and diet_type = ?", clientId, dietType).
-		Order("date DESC").
+		Order("date DESC, created_at DESC").
 		Limit(1).
 		Pluck("diet_string", &diet).
 		Error
