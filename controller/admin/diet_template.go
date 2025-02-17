@@ -30,22 +30,21 @@ func GetDietTemplatesList(c *gin.Context) {
 		return
 	}
 
+	fmt.Println(dietTemplates)
+
 	// transform the results into usable format
 	var res []struct {
 		ID   uint
 		Name string
-		Diet string
 	}
 
 	for _, dietTemplate := range dietTemplates {
 		res = append(res, struct {
 			ID   uint
 			Name string
-			Diet string
 		}{
 			ID:   dietTemplate.ID,
 			Name: dietTemplate.Name,
-			Diet: *dietTemplate.DietString,
 		})
 	}
 
