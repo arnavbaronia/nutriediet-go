@@ -15,7 +15,7 @@ import (
 const (
 	TypeDiet = "0"
 
-	TypeDetoxDiet = "2"
+	TypeDetoxDiet = "1"
 )
 
 func GetRegularDietForClient(c *gin.Context) {
