@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-func GetRecipeByMealID(c *gin.Context) {
+func GetRecipeByID(c *gin.Context) {
 	if !helpers.CheckUserType(c, "ADMIN") {
 		fmt.Errorf("error: client user not allowed to access")
 		c.JSON(http.StatusUnauthorized, gin.H{"err": "unauthorized access by client"})
@@ -24,13 +24,13 @@ func GetRecipeByMealID(c *gin.Context) {
 	db := database.DB
 
 	recipe := model.Recipe{}
-	if err := db.Where("id = ?", c.Param("meal_id")).First(&recipe).Error; err != nil {
+	if err := db.Where("id = ?", c.Param("id")).First(&recipe).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			fmt.Errorf("error: GetRecipeByMealIDForClient | recipe does not exist with meal_id: %d", c.Param("meal_id"))
+			fmt.Errorf("error: GetRecipeByID | recipe does not exist with id: %d", c.Param("id"))
 			c.JSON(http.StatusNotFound, gin.H{"error": err})
 			return
 		}
-		fmt.Errorf("error: GetRecipeByMealIDForClient could not fetch recipe with meal_id %d | err: %v", c.Param("meal_id"), err)
+		fmt.Errorf("error: GetRecipeByID could not fetch recipe with id %d | err: %v", c.Param("id"), err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
@@ -49,7 +49,7 @@ func GetRecipeByMealID(c *gin.Context) {
 	return
 }
 
-func UpdateRecipeByMealID(c *gin.Context) {
+func UpdateRecipeByID(c *gin.Context) {
 	if !helpers.CheckUserType(c, "ADMIN") {
 		fmt.Errorf("error: client user not allowed to access")
 		c.JSON(http.StatusUnauthorized, gin.H{"err": "unauthorized access by client"})
@@ -58,7 +58,7 @@ func UpdateRecipeByMealID(c *gin.Context) {
 
 	var recipeReq model.UpdateRecipeRequest
 	if err := c.BindJSON(&recipeReq); err != nil {
-		fmt.Errorf("error: UpdateRecipeByMealID | could not extract request from context | err : %v", err)
+		fmt.Errorf("error: UpdateRecipeByID | could not extract request from context | err : %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -67,14 +67,14 @@ func UpdateRecipeByMealID(c *gin.Context) {
 	steps := strings.Join(recipeReq.Preparation, ";")
 
 	recipe := model.Recipe{
-		ID:          recipeReq.MealID,
+		ID:          recipeReq.ID,
 		Name:        recipeReq.Name,
 		Ingredients: ingredients,
 		Preparation: steps,
 	}
 	db := database.DB
-	if err := db.Model(&model.Recipe{}).Where("id = ?", c.Param("meal_id")).Select("name", "ingredients", "preparation").Updates(&recipe).Error; err != nil {
-		fmt.Errorf("error: UpdateRecipeByMealID | could not save recipe %v | err: %v", recipe, err.Error())
+	if err := db.Model(&model.Recipe{}).Where("id = ?", c.Param("id")).Select("name", "ingredients", "preparation").Updates(&recipe).Error; err != nil {
+		fmt.Errorf("error: UpdateRecipeByID | could not save recipe %v | err: %v", recipe, err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -92,30 +92,37 @@ func CreateRecipe(c *gin.Context) {
 
 	var recipeReq model.CreateRecipeRequest
 	if err := c.BindJSON(&recipeReq); err != nil {
-		fmt.Errorf("error: CreateRecipeByMealID | could not extract request from context | err : %v", err)
+		fmt.Errorf("error: CreateRecipe | could not extract request from context | err : %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	ingredients := ""
 	for _, ingredient := range recipeReq.Ingredients {
-		ingredients = ingredients + ";" + ingredient
+		if ingredients == "" {
+			ingredients = ingredient
+		} else {
+			ingredients = ingredients + ";" + ingredient
+		}
 	}
 
 	steps := ""
 	for _, prep := range recipeReq.Preparation {
-		steps = steps + ";" + prep
+		if steps == "" {
+			steps = prep
+		} else {
+			steps = steps + ";" + prep
+		}
 	}
 
 	recipe := model.Recipe{
-		MealID:      recipeReq.MealID,
 		Name:        recipeReq.Name,
 		Ingredients: ingredients,
 		Preparation: steps,
 	}
 	db := database.DB
 	if err := db.Save(&recipe).Error; err != nil {
-		fmt.Errorf("error: CreateRecipeByMealID | could not save recipe %v | err: %v", recipe, err.Error())
+		fmt.Errorf("error: CreateRecipe | could not save recipe %v | err: %v", recipe, err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -124,22 +131,22 @@ func CreateRecipe(c *gin.Context) {
 	return
 }
 
-func DeleteRecipeByMealID(c *gin.Context) {
+func DeleteRecipeByID(c *gin.Context) {
 	if !helpers.CheckUserType(c, "ADMIN") {
 		fmt.Errorf("error: client user not allowed to access")
 		c.JSON(http.StatusUnauthorized, gin.H{"err": "unauthorized access by client"})
 		return
 	}
 
-	mealID, err := strconv.Atoi(c.Param("meal_id"))
+	recipeID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid meal ID"})
 		return
 	}
 
 	db := database.DB
-	if err := db.Model(&model.Recipe{}).Where("food_id = ?", mealID).Update("deleted_at", time.Now()).Error; err != nil {
-		fmt.Errorf("error: DeleteRecipeByMealID | could not delete recipe with meal_id: %v | err: %v", c.Param("meal_id"), err.Error())
+	if err := db.Model(&model.Recipe{}).Where("id = ?", recipeID).Update("deleted_at", time.Now()).Error; err != nil {
+		fmt.Errorf("error: DeleteRecipeByMealID | could not delete recipe with id: %v | err: %v", c.Param("id"), err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -156,7 +163,7 @@ func GetListOfRecipes(c *gin.Context) {
 	}
 	db := database.DB
 	var recipes []model.Recipe
-	if err := db.Find(&recipes).Error; err != nil {
+	if err := db.Where("deleted_at IS NULL").Find(&recipes).Error; err != nil {
 		fmt.Errorf("error: GetListOfRecipes | could not find recipes: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
