@@ -1,7 +1,7 @@
 package admin
 
 import (
-	"encoding/json"
+	"database/sql"
 	"errors"
 	"fmt"
 	"github.com/cd-Ishita/nutriediet-go/database"
@@ -61,23 +61,19 @@ func GetDietTemplateByID(c *gin.Context) {
 
 	db := database.DB
 
-	var dietTemplateJSON []string
-	err := db.Model(&model.DietTemplate{}).Where("id = ? and deleted_at IS NULL", c.Param("diet_template_id")).Pluck("diet", &dietTemplateJSON).Error
+	var diet sql.NullString
+	err := db.Model(&model.DietTemplate{}).Where("id = ? and deleted_at IS NULL", c.Param("diet_template_id")).Pluck("diet_string", &diet).Error
 	if err != nil {
 		fmt.Errorf("error: could not fetch dietTemplate with id: %s for GetDietTemplateByID | err: %v", c.Param("diet_template_id"), err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
 		return
 	}
 
-	dietTemplate := model.DietSchedule{}
-	err = json.Unmarshal([]byte(dietTemplateJSON[0]), &dietTemplate)
-	if err != nil {
-		fmt.Errorf("error: could not unmarshal diet template with id: %s for GetDietTemplateByID | err: %v", c.Param("diet_template_id"), err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
-		return
+	if !diet.Valid {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "no diet"})
 	}
 
-	c.JSON(http.StatusOK, gin.H{"template": dietTemplate})
+	c.JSON(http.StatusOK, gin.H{"template": diet.String})
 }
 
 func CreateDietTemplate(c *gin.Context) {
