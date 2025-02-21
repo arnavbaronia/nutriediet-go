@@ -132,17 +132,15 @@ func UpdateClientInfo(c *gin.Context) {
 
 func migrateClientInfoForAdmin(updatedInfo model.Client, existingInfo model.Client) model.Client {
 	// TODO: do we want admin to be able to update the starting weight in cases where client comes back
+
 	client := model.Client{
 		ID:                existingInfo.ID,
 		Name:              updatedInfo.Name,
 		Age:               updatedInfo.Age,
 		City:              updatedInfo.City,
 		PhoneNumber:       updatedInfo.PhoneNumber,
-		DateOfJoining:     updatedInfo.DateOfJoining,
 		Package:           updatedInfo.Package,
 		AmountPaid:        updatedInfo.AmountPaid,
-		LastPaymentDate:   updatedInfo.LastPaymentDate,
-		NextPaymentDate:   updatedInfo.NextPaymentDate, // should be computed field
 		Remarks:           updatedInfo.Remarks,
 		DietitianId:       updatedInfo.DietitianId,
 		Group:             updatedInfo.Group,
@@ -158,10 +156,21 @@ func migrateClientInfoForAdmin(updatedInfo model.Client, existingInfo model.Clie
 		DietRecall:        updatedInfo.DietRecall,
 		IsActive:          updatedInfo.IsActive,
 		Locality:          updatedInfo.Locality,
-		CreatedAt:         updatedInfo.CreatedAt,
 	}
-	nextPaymentDate := client.LastPaymentDate.AddDate(0, 0, constants.PackageDayMap[updatedInfo.Package])
-	client.NextPaymentDate = &nextPaymentDate
+
+	if updatedInfo.DateOfJoining != nil {
+		client.DateOfJoining = updatedInfo.DateOfJoining
+	}
+
+	if updatedInfo.LastPaymentDate != nil {
+		client.LastPaymentDate = updatedInfo.LastPaymentDate
+		nextPaymentDate := client.LastPaymentDate.AddDate(0, 0, constants.PackageDayMap[updatedInfo.Package])
+		client.NextPaymentDate = &nextPaymentDate
+	}
+
+	if existingInfo.CreatedAt != nil {
+		client.CreatedAt = existingInfo.CreatedAt
+	}
 	return client
 }
 
