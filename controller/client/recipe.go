@@ -9,9 +9,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"net/http"
+	"strings"
 )
 
-func GetRecipeByMealIDForClient(c *gin.Context) {
+func GetRecipesForClient(c *gin.Context) {
 	// For Client users, need to check if account is active
 	clientEmail := c.GetString("email")
 	isAllowed, isActive := middleware.ClientAuthentication(clientEmail, c.Param("client_id"))
@@ -28,17 +29,27 @@ func GetRecipeByMealIDForClient(c *gin.Context) {
 	db := database.DB
 
 	recipe := model.Recipe{}
-	if err := db.Where("meal_id = ?", c.Param("meal_id")).First(&recipe).Error; err != nil {
+	if err := db.Where("id = ?", c.Param("id")).First(&recipe).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			fmt.Errorf("error: GetRecipeByMealIDForClient | recipe does not exist with meal_id: %d", c.Param("meal_id"))
+			fmt.Errorf("error: GetRecipeByID | recipe does not exist with id: %d", c.Param("id"))
 			c.JSON(http.StatusNotFound, gin.H{"error": err})
 			return
 		}
-		fmt.Errorf("error: GetRecipeByMealIDForClient could not fetch recipe with meal_id %d | err: %v", c.Param("meal_id"), err)
+		fmt.Errorf("error: GetRecipeByID could not fetch recipe with id %d | err: %v", c.Param("id"), err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"recipe": recipe, "isActive": isActive})
+	ingredientsList := strings.Split(recipe.Ingredients, ";")
+	prepList := strings.Split(recipe.Preparation, ";")
+
+	res := model.GetRecipeResponse{
+		ID:          recipe.ID,
+		Name:        recipe.Name,
+		Ingredients: ingredientsList,
+		Preparation: prepList,
+	}
+
+	c.JSON(http.StatusOK, gin.H{"recipe": res, "isActive": isActive})
 	return
 }
