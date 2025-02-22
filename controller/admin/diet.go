@@ -35,15 +35,26 @@ func GetDietHistoryForClient(c *gin.Context) {
 	}
 
 	// transform the results into given format
-	res := []model.GetDietHistoryForClientResponse{}
+	resRegularDiet := []model.GetDietHistoryForClientResponse{}
+	resDetoxDiet := []model.GetDietHistoryForClientResponse{}
 	for _, diet := range dietHistory {
-		res = append(res, model.GetDietHistoryForClientResponse{
-			WeekNumber: diet.WeekNumber,
-			Diet:       *diet.DietString,
-		})
+		if diet.DietType == 0 {
+			// regular diet
+			resRegularDiet = append(resRegularDiet, model.GetDietHistoryForClientResponse{
+				WeekNumber: diet.WeekNumber,
+				Diet:       *diet.DietString,
+			})
+		} else if diet.DietType == 1 {
+			// detox diet
+			resDetoxDiet = append(resDetoxDiet, model.GetDietHistoryForClientResponse{
+				WeekNumber: diet.WeekNumber,
+				Diet:       *diet.DietString,
+			})
+		}
+
 	}
 
-	c.JSON(http.StatusOK, gin.H{"diet_history": res})
+	c.JSON(http.StatusOK, gin.H{"diet_history_regular": resRegularDiet, "diet_history_detox": resDetoxDiet})
 	return
 }
 
@@ -103,7 +114,7 @@ func SaveDietForClient(c *gin.Context) {
 	// fetch the week_number of the last diet sent
 	var weekNumber int
 	err := db.Model(&model.DietHistory{}).
-		Where("client_id = ? and diet_type = ?", clientID, 0).
+		Where("client_id = ? and diet_type = ?", clientID, schedule.DietType).
 		Select("week_number").
 		Order("date DESC").
 		Limit(1).

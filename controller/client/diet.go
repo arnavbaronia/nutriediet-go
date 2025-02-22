@@ -55,11 +55,15 @@ func GetDetoxDietForClient(c *gin.Context) {
 		return
 	}
 
+	fmt.Println("ishitagupta detox diet: %s", clientEmail)
+
 	diet, err := getDietForClient(c.Param("client_id"), TypeDetoxDiet)
 	if err != nil {
 		fmt.Errorf("error finding diet for client_id: %s", c.Param("client_id"))
 		return
 	}
+
+	fmt.Println("ishitagupta detox diet: %v", diet)
 
 	c.JSON(http.StatusOK, gin.H{"isActive": true, "diet": diet})
 	return
@@ -98,12 +102,4 @@ func getDietForClient(clientId, dietType string) (*string, error) {
 
 	// Extract the schedule from the diet history record
 	return &diet.String, nil
-}
-
-// FUTURE: check if meal id is applicable for client before fetching
-func GetRecipeForMealID(c *gin.Context) {
-	// pull the recipe
-	//db := database.DB
-	//
-	//err := db.Where("")
 }
