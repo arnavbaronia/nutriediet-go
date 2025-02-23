@@ -68,7 +68,7 @@ type SaveDietForClientRequest struct {
 	//Diet       DietSchedule
 	Diet       string `json:"diet,omitempty"`
 	WeekNumber int    `json:"week_number,omitempty"`
-	DietType   uint32 `json:"diet_type,omitempty"`
+	DietType   uint32 `json:"DietType,omitempty"`
 }
 
 type CreateDietTemplateRequest struct {
