@@ -15,9 +15,10 @@ import (
 func GetRecipesForClient(c *gin.Context) {
 	// For Client users, need to check if account is active
 	clientEmail := c.GetString("email")
+	fmt.Println("GetRecipesForClient", clientEmail)
 	isAllowed, isActive := middleware.ClientAuthentication(clientEmail, c.Param("client_id"))
 	if !isAllowed {
-		c.JSON(http.StatusUnauthorized, gin.H{"clientEmail": c.Param("email"), "requestClientID": c.Param("client_id")})
+		c.JSON(http.StatusUnauthorized, gin.H{"clientEmail": clientEmail, "requestClientID": c.Param("client_id")})
 		return
 	}
 	if !isActive {
@@ -28,8 +29,8 @@ func GetRecipesForClient(c *gin.Context) {
 
 	db := database.DB
 
-	recipe := model.Recipe{}
-	if err := db.Where("id = ?", c.Param("id")).First(&recipe).Error; err != nil {
+	recipes := []model.Recipe{}
+	if err := db.Model(&model.Recipe{}).Where("deleted_at IS NULL").Find(&recipes).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			fmt.Errorf("error: GetRecipeByID | recipe does not exist with id: %d", c.Param("id"))
 			c.JSON(http.StatusNotFound, gin.H{"error": err})
@@ -40,14 +41,17 @@ func GetRecipesForClient(c *gin.Context) {
 		return
 	}
 
-	ingredientsList := strings.Split(recipe.Ingredients, ";")
-	prepList := strings.Split(recipe.Preparation, ";")
+	res := []model.GetRecipeResponse{}
+	for _, recipe := range recipes {
+		ingredientsList := strings.Split(recipe.Ingredients, ";")
+		prepList := strings.Split(recipe.Preparation, ";")
 
-	res := model.GetRecipeResponse{
-		ID:          recipe.ID,
-		Name:        recipe.Name,
-		Ingredients: ingredientsList,
-		Preparation: prepList,
+		res = append(res, model.GetRecipeResponse{
+			ID:          recipe.ID,
+			Name:        recipe.Name,
+			Ingredients: ingredientsList,
+			Preparation: prepList,
+		})
 	}
 
 	c.JSON(http.StatusOK, gin.H{"recipe": res, "isActive": isActive})

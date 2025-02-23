@@ -35,11 +35,12 @@ func UserRoutes(incomingRoutes *gin.Engine) {
 	incomingRoutes.POST("/clients/:client_id/my_profile", clientController.UpdateProfileByClient)
 	incomingRoutes.GET("/clients/:client_id/my_profile", clientController.GetProfileForClient)
 	incomingRoutes.GET("/clients/:client_id/profile_created", clientController.HasClientCreatedProfile)
-	// EMAIL-BASED PROFILE CREATION (Separate from client routes to avoid conflicts)
-	incomingRoutes.POST("/users/:email/create_profile", clientController.CreateProfileByClient)
 
 	// CLIENT - RECIPE
-	incomingRoutes.GET("clients/recipe", clientController.GetRecipesForClient)
+	incomingRoutes.GET("clients/:client_id/recipe", clientController.GetRecipesForClient)
+
+	// EMAIL-BASED PROFILE CREATION (Separate from client routes to avoid conflicts)
+	incomingRoutes.POST("/users/:email/create_profile", clientController.CreateProfileByClient)
 
 	// <<<<<<<<===============================================================================>>>>>>
 	// ADMIN ROUTES (Prefix with `/admin` for all admin-related routes)

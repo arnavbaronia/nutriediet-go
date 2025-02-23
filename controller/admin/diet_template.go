@@ -1,7 +1,6 @@
 package admin
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
 	"github.com/cd-Ishita/nutriediet-go/database"
@@ -61,19 +60,19 @@ func GetDietTemplateByID(c *gin.Context) {
 
 	db := database.DB
 
-	var diet sql.NullString
-	err := db.Model(&model.DietTemplate{}).Where("id = ? and deleted_at IS NULL", c.Param("diet_template_id")).Pluck("diet_string", &diet).Error
+	var dietTemplate model.DietTemplate
+	err := db.Model(&model.DietTemplate{}).Where("id = ? and deleted_at IS NULL", c.Param("diet_template_id")).Select("diet_string", "name").Find(&dietTemplate).Error
 	if err != nil {
 		fmt.Errorf("error: could not fetch dietTemplate with id: %s for GetDietTemplateByID | err: %v", c.Param("diet_template_id"), err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
 		return
 	}
 
-	if !diet.Valid {
+	if dietTemplate.DietString == nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "no diet"})
 	}
 
-	c.JSON(http.StatusOK, gin.H{"template": diet.String})
+	c.JSON(http.StatusOK, gin.H{"name": dietTemplate.Name, "template": dietTemplate.DietString})
 }
 
 func CreateDietTemplate(c *gin.Context) {

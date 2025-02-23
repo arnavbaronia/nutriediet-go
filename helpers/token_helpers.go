@@ -86,6 +86,5 @@ func ValidateToken(token string) (SignedDetails, error) {
 	if claims.ExpiresAt.Before(time.Now()) {
 		return SignedDetails{}, errors.New("expired token")
 	}
-
 	return *claims, nil
 }
