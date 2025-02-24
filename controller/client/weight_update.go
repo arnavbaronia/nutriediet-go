@@ -48,7 +48,7 @@ func UpdateWeightForClient(c *gin.Context) {
 	}
 
 	dietRecord := model.DietHistory{}
-	err = db.Table("diet_histories").Where("client_id = ?", c.Param("client_id")).Order("date DESC").Select("id").First(&dietRecord).Error
+	err = db.Table("diet_histories").Where("client_id = ? and diet_type = 0", c.Param("client_id")).Order("date DESC").Select("id").First(&dietRecord).Error
 	if err != nil {
 		fmt.Println("Could not retrieve diet record for client_id: " + c.Param("client_id"))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
