@@ -151,6 +151,35 @@ func SaveDietForClient(c *gin.Context) {
 	return
 }
 
+func EditDietForClient(c *gin.Context) {
+
+	if !helpers.CheckUserType(c, "ADMIN") {
+		fmt.Errorf("error: client user not allowed to access")
+		c.JSON(http.StatusUnauthorized, gin.H{"err": "unauthorized access by client"})
+		return
+	}
+
+	// Parse the request body to extract the diet information
+	var schedule model.EditDietForClientRequest
+	if err := c.BindJSON(&schedule); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	db := database.DB
+	clientID, _ := strconv.ParseUint(c.Param("client_id"), 10, 64)
+
+	if err := db.Table("diet_histories").Where("id = ? and diet_type = ? and client_id = ?", schedule.DietID, schedule.DietType, clientID).Update("diet_string", schedule.Diet).Error; err != nil {
+		fmt.Errorf("error: SaveDietForClient | could not save diet for diet_history_id %d for client_id %s | err: %v", schedule.Diet, clientID, err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Return a success response
+	c.JSON(http.StatusOK, gin.H{"message": "Diet information saved successfully"})
+	return
+}
+
 func GetWeightHistoryForClient(c *gin.Context) {
 	if !helpers.CheckUserType(c, "ADMIN") {
 		fmt.Errorf("error: client user not allowed to access")
