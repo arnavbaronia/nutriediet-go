@@ -170,7 +170,7 @@ func EditDietForClient(c *gin.Context) {
 	clientID, _ := strconv.ParseUint(c.Param("client_id"), 10, 64)
 
 	if err := db.Table("diet_histories").Where("id = ? and diet_type = ? and client_id = ?", schedule.DietID, schedule.DietType, clientID).Update("diet_string", schedule.Diet).Error; err != nil {
-		fmt.Errorf("error: SaveDietForClient | could not save diet for diet_history_id %d for client_id %s | err: %v", schedule.Diet, clientID, err.Error())
+		fmt.Errorf("error: SaveDietForClient | could not save diet for diet_history_id %d for client_id %s | err: %v", schedule.Diet, c.Param("client_id"), err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -208,5 +208,44 @@ func GetWeightHistoryForClient(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"response": res})
+	return
+}
+
+func UpdateWeightForClientByAdmin(c *gin.Context) {
+	if !helpers.CheckUserType(c, "ADMIN") {
+		fmt.Errorf("error: client user not allowed to access")
+		c.JSON(http.StatusUnauthorized, gin.H{"err": "unauthorized access by client"})
+		return
+	}
+
+	clientID := c.Param("client_id")
+	if clientID == "" || clientID == "0" {
+		fmt.Errorf("error: client_id cannot be empty string")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "client_id cannot be empty string"})
+		return
+	}
+
+	db := database.DB
+	dietRecord := model.DietHistory{}
+	err := db.Table("diet_histories").Where("client_id = ? and diet_type = 0", c.Param("client_id")).Order("date DESC").Select("id").First(&dietRecord).Error
+	if err != nil {
+		fmt.Println("Could not retrieve diet record for client_id: " + c.Param("client_id"))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	req := float32(0)
+	if err := c.BindJSON(&req); err != nil {
+		fmt.Println("Wrong request, cannot be extracted. For client_id: " + c.Param("client_id"))
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := db.Table("diet_histories").Where("id = ? and diet_type = 0", dietRecord.ID).Update("weight", req).Error; err != nil {
+		fmt.Println("Error while saving client diet record", dietRecord)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{})
 	return
 }
