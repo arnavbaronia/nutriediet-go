@@ -90,6 +90,7 @@ type UpdateDietTemplateRequest struct {
 }
 
 type GetDietHistoryForClientResponse struct {
+	DietID     uint   `json:"diet_id"`
 	WeekNumber int    `json:"week_number,omitempty"`
 	Diet       string `json:"diet,omitempty"`
 }

@@ -3,14 +3,15 @@ package admin
 import (
 	"errors"
 	"fmt"
+	"net/http"
+	"strconv"
+	"time"
+
 	"github.com/cd-Ishita/nutriediet-go/database"
 	"github.com/cd-Ishita/nutriediet-go/helpers"
 	"github.com/cd-Ishita/nutriediet-go/model"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
-	"net/http"
-	"strconv"
-	"time"
 )
 
 func GetDietHistoryForClient(c *gin.Context) {
@@ -23,7 +24,7 @@ func GetDietHistoryForClient(c *gin.Context) {
 	db := database.DB
 
 	var dietHistory []model.DietHistory
-	err := db.Model(&model.DietHistory{}).Where("client_id = ? and deleted_at IS NULL and week_number > 0", c.Param("client_id")).Select("diet_string", "week_number", "diet_type").Find(&dietHistory).Error
+	err := db.Model(&model.DietHistory{}).Where("client_id = ? and deleted_at IS NULL and week_number > 0", c.Param("client_id")).Select("id", "diet_string", "week_number", "diet_type").Find(&dietHistory).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		fmt.Errorf("error: diet does not exist for client_id %d", c.Param("client_id"))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -41,12 +42,14 @@ func GetDietHistoryForClient(c *gin.Context) {
 		if diet.DietType == 0 {
 			// regular diet
 			resRegularDiet = append(resRegularDiet, model.GetDietHistoryForClientResponse{
+				DietID:     diet.ID,
 				WeekNumber: diet.WeekNumber,
 				Diet:       *diet.DietString,
 			})
 		} else if diet.DietType == 1 {
 			// detox diet
 			resDetoxDiet = append(resDetoxDiet, model.GetDietHistoryForClientResponse{
+				DietID:     diet.ID,
 				WeekNumber: diet.WeekNumber,
 				Diet:       *diet.DietString,
 			})
