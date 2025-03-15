@@ -78,7 +78,7 @@ func GetClientInfo(c *gin.Context) {
 	}
 
 	dietHistories := []model.DietHistory{}
-	err = db.Table("diet_histories").Where("client_id = ?", c.Param("client_id")).Select("id", "week_number").Find(&dietHistories).Error
+	err = db.Table("diet_histories").Where("client_id = ?", c.Param("client_id")).Find(&dietHistories).Error
 	if err != nil {
 		fmt.Errorf("error: could not fetch number of rows for client_id %s | %v", c.Param("client_id"), err)
 		c.JSON(http.StatusInternalServerError, gin.H{"err": err})

@@ -3,15 +3,14 @@ package admin
 import (
 	"errors"
 	"fmt"
-	"net/http"
-	"strconv"
-	"time"
-
 	"github.com/cd-Ishita/nutriediet-go/database"
 	"github.com/cd-Ishita/nutriediet-go/helpers"
 	"github.com/cd-Ishita/nutriediet-go/model"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"net/http"
+	"strconv"
+	"time"
 )
 
 func GetDietHistoryForClient(c *gin.Context) {
@@ -24,7 +23,7 @@ func GetDietHistoryForClient(c *gin.Context) {
 	db := database.DB
 
 	var dietHistory []model.DietHistory
-	err := db.Model(&model.DietHistory{}).Where("client_id = ? and deleted_at IS NULL and week_number > 0", c.Param("client_id")).Select("id", "diet_string", "week_number", "diet_type").Find(&dietHistory).Error
+	err := db.Model(&model.DietHistory{}).Where("client_id = ? and deleted_at IS NULL and week_number > 0", c.Param("client_id")).Select("diet_string", "week_number", "diet_type").Find(&dietHistory).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		fmt.Errorf("error: diet does not exist for client_id %d", c.Param("client_id"))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -36,23 +35,15 @@ func GetDietHistoryForClient(c *gin.Context) {
 	}
 
 	// transform the results into given format
-	resRegularDiet := []model.GetDietHistoryForClientResponse{}
-	resDetoxDiet := []model.GetDietHistoryForClientResponse{}
+	var resRegularDiet []model.DietHistory
+	var resDetoxDiet []model.DietHistory
 	for _, diet := range dietHistory {
 		if diet.DietType == 0 {
 			// regular diet
-			resRegularDiet = append(resRegularDiet, model.GetDietHistoryForClientResponse{
-				DietID:     diet.ID,
-				WeekNumber: diet.WeekNumber,
-				Diet:       *diet.DietString,
-			})
+			resRegularDiet = append(resRegularDiet, diet)
 		} else if diet.DietType == 1 {
 			// detox diet
-			resDetoxDiet = append(resDetoxDiet, model.GetDietHistoryForClientResponse{
-				DietID:     diet.ID,
-				WeekNumber: diet.WeekNumber,
-				Diet:       *diet.DietString,
-			})
+			resDetoxDiet = append(resDetoxDiet, diet)
 		}
 
 	}
@@ -251,4 +242,49 @@ func UpdateWeightForClientByAdmin(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{})
 	return
+}
+
+func DeleteDietForClientByAdmin(c *gin.Context) {
+	if !helpers.CheckUserType(c, "ADMIN") {
+		fmt.Errorf("error: client user not allowed to access")
+		c.JSON(http.StatusUnauthorized, gin.H{"err": "unauthorized access by client"})
+		return
+	}
+
+	clientID := c.Param("client_id")
+	if clientID == "" || clientID == "0" {
+		fmt.Errorf("error: client_id cannot be empty string")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "client_id cannot be empty string"})
+		return
+	}
+
+	// request contains the diet id to be deleted
+	req := uint(0)
+	if err := c.BindJSON(&req); err != nil {
+		fmt.Println("Wrong request, cannot be extracted. For client_id: " + c.Param("client_id"))
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	db := database.DB
+	// verify that the given id exists and is the latest diet of that type
+	diet := model.DietHistory{}
+	err := db.Where("id = ? and client_id = ? and deleted_at IS NULL", req, clientID).Find(&diet).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		fmt.Errorf("error: could not find diet_history_id %d for client_id %s", req, clientID)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	} else if err != nil {
+		fmt.Println("Could not retrieve diet record for client_id: " + c.Param("client_id"))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// try to see if a more recent diet of that type exists
+	err = db.Model(&model.DietHistory{}).
+		Where("client_id = ? and diet_type = ?", clientID, diet.DietType).
+		Order("date DESC, created_at DESC").
+		Limit(1).
+		Pluck("diet_string", &diet).
+		Error
 }
