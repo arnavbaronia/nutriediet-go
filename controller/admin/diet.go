@@ -23,7 +23,7 @@ func GetDietHistoryForClient(c *gin.Context) {
 	db := database.DB
 
 	var dietHistory []model.DietHistory
-	err := db.Model(&model.DietHistory{}).Where("client_id = ? and deleted_at IS NULL and week_number > 0", c.Param("client_id")).Select("diet_string", "week_number", "diet_type").Find(&dietHistory).Error
+	err := db.Model(&model.DietHistory{}).Where("client_id = ? and deleted_at IS NULL and week_number > 0", c.Param("client_id")).Find(&dietHistory).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		fmt.Errorf("error: diet does not exist for client_id %d", c.Param("client_id"))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
