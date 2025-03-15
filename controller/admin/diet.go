@@ -228,14 +228,17 @@ func UpdateWeightForClientByAdmin(c *gin.Context) {
 		return
 	}
 
-	req := float32(0)
+	var req model.WeightUpdateRequest
 	if err := c.BindJSON(&req); err != nil {
 		fmt.Println("Wrong request, cannot be extracted. For client_id: " + c.Param("client_id"))
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	if err := db.Table("diet_histories").Where("id = ? and diet_type = 0", dietRecord.ID).Update("weight", req).Error; err != nil {
+	if err := db.Table("diet_histories").Where("id = ? and diet_type = 0", dietRecord.ID).Updates(model.DietHistory{
+		Weight:   &req.Weight,
+		Feedback: req.Feedback,
+	}).Error; err != nil {
 		fmt.Println("Error while saving client diet record", dietRecord)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

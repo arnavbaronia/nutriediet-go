@@ -74,7 +74,7 @@ type SaveDietForClientRequest struct {
 type EditDietForClientRequest struct {
 	DietID   uint   `json:"diet_id,omitempty"`
 	Diet     string `json:"diet,omitempty"`
-	DietType uint32 `json:"DietType,omitempty"`
+	DietType uint32 `json:"diet_type,omitempty"`
 }
 
 type CreateDietTemplateRequest struct {
