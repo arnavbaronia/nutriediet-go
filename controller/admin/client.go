@@ -143,7 +143,7 @@ func migrateClientInfoForAdmin(updatedInfo model.Client, existingInfo model.Clie
 		AmountPaid:        updatedInfo.AmountPaid,
 		Remarks:           updatedInfo.Remarks,
 		DietitianId:       updatedInfo.DietitianId,
-		Group:             updatedInfo.Group,
+		GroupID:           updatedInfo.GroupID,
 		Email:             existingInfo.Email,
 		Height:            updatedInfo.Height,
 		StartingWeight:    existingInfo.StartingWeight,

@@ -15,7 +15,7 @@ type Client struct {
 	NextPaymentDate   *time.Time `gorm:"column:next_payment_date" json:"next_payment_date,omitempty"`
 	Remarks           string     `gorm:"column:remarks" json:"remarks,omitempty"`
 	DietitianId       int        `gorm:"column:dietitian_id" json:"dietitian_id,omitempty"`
-	Group             int        `gorm:"column:\"group\"" json:"group,omitempty"`
+	GroupID           int        `gorm:"column:group_id" json:"group_id,omitempty"`
 	Email             string     `gorm:"column:email" json:"email,omitempty"`
 	Height            int        `gorm:"column:height" json:"height,omitempty"`
 	StartingWeight    float32    `gorm:"column:starting_weight" json:"starting_weight,omitempty"`

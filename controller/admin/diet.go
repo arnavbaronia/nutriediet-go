@@ -288,3 +288,74 @@ func DeleteDietForClientByAdmin(c *gin.Context) {
 		Pluck("diet_string", &diet).
 		Error
 }
+
+func SaveCommonDietForClients(c *gin.Context) {
+
+	if !helpers.CheckUserType(c, "ADMIN") {
+		fmt.Errorf("error: client user not allowed to access")
+		c.JSON(http.StatusUnauthorized, gin.H{"err": "unauthorized access by client"})
+		return
+	}
+
+	// Parse the request body to extract the diet information
+	var req model.SaveCommonDietForClientsRequest
+	if err := c.BindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	db := database.DB
+
+	var clientIDs []uint64
+	for _, val := range req.Groups {
+		var groupClientIDs []uint64
+		err := db.Model(&model.Client{}).Where("group_id = ?", val).Select("id").Find(&groupClientIDs).Error
+		if err != nil {
+			fmt.Errorf("error: could not find group clients for group_id %d: %s", val, err.Error())
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		} else if len(groupClientIDs) == 0 {
+			fmt.Errorf("error: could not find group clients for group_id %d", val)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "no count"})
+			return
+		}
+		clientIDs = append(clientIDs, groupClientIDs...)
+	}
+
+	var createDietReq []model.DietHistory
+	for _, clientID := range clientIDs {
+		// fetch the week_number of the last diet sent
+		var weekNumber int
+		err := db.Model(&model.DietHistory{}).
+			Where("client_id = ? and diet_type = ?", clientID, req.DietType).
+			Select("week_number").
+			Order("date DESC").
+			Limit(1).
+			Find(&weekNumber).
+			Error
+		if err != nil {
+			fmt.Errorf("err: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		createDietReq = append(createDietReq, model.DietHistory{
+			WeekNumber: weekNumber + 1,
+			ClientID:   clientID,
+			Date:       time.Now(),
+			Weight:     nil,
+			DietType:   req.DietType,
+			DietString: &req.Diet,
+		})
+	}
+
+	if err := db.Create(&createDietReq).Error; err != nil {
+		fmt.Errorf("error: SaveDietForClient | could not create diets %v for clients %v | err: %v", createDietReq, clientIDs, err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Return a success response
+	c.JSON(http.StatusCreated, gin.H{"message": "Diet information saved successfully"})
+	return
+}

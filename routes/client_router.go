@@ -58,6 +58,8 @@ func UserRoutes(incomingRoutes *gin.Engine) {
 	incomingRoutes.POST("/admin/:client_id/diet", adminController.SaveDietForClient)
 	incomingRoutes.POST("/admin/:client_id/edit_diet", adminController.EditDietForClient)
 	incomingRoutes.POST("/admin/:client_id/weight_update", adminController.UpdateWeightForClientByAdmin)
+	incomingRoutes.POST("/admin/:client_id/delete_diet", adminController.DeleteDietForClientByAdmin)
+	incomingRoutes.POST("/admin/common_diet", adminController.SaveCommonDietForClients)
 
 	// <<<<<<<<===============================================================================>>>>>>
 

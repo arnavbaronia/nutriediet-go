@@ -94,3 +94,9 @@ type GetDietHistoryForClientResponse struct {
 	WeekNumber int    `json:"week_number,omitempty"`
 	Diet       string `json:"diet,omitempty"`
 }
+
+type SaveCommonDietForClientsRequest struct {
+	Diet     string `json:"diet,omitempty"`
+	DietType uint32 `json:"diet_type,omitempty"`
+	Groups   []int  `json:"groups,omitempty"`
+}
