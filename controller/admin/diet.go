@@ -284,12 +284,35 @@ func DeleteDietForClientByAdmin(c *gin.Context) {
 	}
 
 	// try to see if a more recent diet of that type exists
+	var latestDiet model.DietHistory
 	err = db.Model(&model.DietHistory{}).
-		Where("client_id = ? and diet_type = ?", clientID, diet.DietType).
+		Where("client_id = ? and diet_type = ? and deleted_at IS NULL", clientID, diet.DietType).
 		Order("date DESC, created_at DESC").
 		Limit(1).
-		Pluck("diet_string", &diet).
+		First(&latestDiet).
 		Error
+	if err != nil {
+		fmt.Errorf("error: could not find diet_history_id for client_id %s | err: %v", clientID, err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if latestDiet.ID != diet.ID {
+		fmt.Errorf("error: trying to delete older diet, not allowed")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "bad delete request"})
+		return
+	}
+	timeNow := time.Now()
+	diet.DeletedAt = &timeNow
+
+	err = db.Model(&model.DietHistory{}).Where("id = ?", diet.ID).Update("deleted_at", timeNow).Error
+	if err != nil {
+		fmt.Errorf("error: could not delete diet_history_id for client_id %s | err: %v", clientID, err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{})
 }
 
 func SaveCommonDietForClients(c *gin.Context) {
