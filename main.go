@@ -27,7 +27,7 @@ func main() {
 
 	// CORS configuration
 	config := cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000"},
+		AllowOrigins:     []string{"https://nutriediet.netlify.app/"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Client-Email", "Request-Client-ID"},
 		ExposeHeaders:    []string{"Content-Length"},
