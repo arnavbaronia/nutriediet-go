@@ -19,7 +19,7 @@ func main() {
 	port := os.Getenv("PORT")
 	if port == "" {
 		fmt.Println("no port found")
-		port = "8081"
+		port = "8080"
 	}
 
 	router := gin.New()
