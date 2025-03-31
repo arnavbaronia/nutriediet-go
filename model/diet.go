@@ -26,10 +26,11 @@ type DietHistory struct {
 	Date       time.Time `gorm:"column:date" json:"date,omitempty"`
 	Weight     *float32  `gorm:"column:weight" json:"weight,omitempty"`
 	//Diet       *DietSchedule `gorm:"column:diet;type:string" json:"diet,omitempty"`
-	DietString *string `gorm:"column:diet_string;size:2500" json:"diet_string,omitempty"`
-	Feedback   string  `gorm:"column:feedback" json:"feedback,omitempty"`
-	Tags       string  `gorm:"column:tags" json:"tags,omitempty"`
-	DietType   uint32  `gorm:"column:diet_type" json:"diet_type,omitempty"`
+	DietString     *string `gorm:"column:diet_string;size:2500" json:"diet_string,omitempty"`
+	Feedback       string  `gorm:"column:feedback" json:"feedback,omitempty"`
+	Tags           string  `gorm:"column:tags" json:"tags,omitempty"`
+	DietType       uint32  `gorm:"column:diet_type" json:"diet_type,omitempty"`
+	DietTemplateID uint    `gorm:"column:diet_template_id" json:"diet_template_id,omitempty"`
 
 	// POSTGRES fields
 	//CreatedAt  *time.Time   `gorm:"column:created_at;type:timestamp not null;default:CURRENT_TIMESTAMP;" json:"created_at"`
@@ -67,9 +68,10 @@ type DietSchedule struct {
 
 type SaveDietForClientRequest struct {
 	//Diet       DietSchedule
-	Diet       string `json:"diet,omitempty"`
-	WeekNumber int    `json:"week_number,omitempty"`
-	DietType   uint32 `json:"DietType,omitempty"`
+	Diet           string `json:"diet,omitempty"`
+	WeekNumber     int    `json:"week_number,omitempty"`
+	DietType       uint32 `json:"DietType,omitempty"`
+	DietTemplateID uint   `json:"diet_template_id,omitempty"`
 }
 
 type EditDietForClientRequest struct {
@@ -97,7 +99,8 @@ type GetDietHistoryForClientResponse struct {
 }
 
 type SaveCommonDietForClientsRequest struct {
-	Diet     string `json:"diet,omitempty"`
-	DietType uint32 `json:"diet_type,omitempty"`
-	Groups   []int  `json:"groups,omitempty"`
+	Diet           string `json:"diet,omitempty"`
+	DietType       uint32 `json:"diet_type,omitempty"`
+	Groups         []int  `json:"groups,omitempty"`
+	DietTemplateID uint   `json:"diet_template_id,omitempty"`
 }

@@ -64,9 +64,9 @@ func SaveDietForClient(c *gin.Context) {
 		return
 	}
 
-	if schedule.Diet == "" || schedule.DietType == 0 {
-		fmt.Errorf("SaveDietForClient | error: request sent without diet or diet type: %v", schedule)
-		c.JSON(http.StatusBadRequest, gin.H{"error": errors.New("diet or Diet Type not given")})
+	if schedule.Diet == "" || schedule.DietType == 0 || schedule.DietTemplateID == 0 {
+		fmt.Errorf("SaveDietForClient | error: request sent without diet or diet type or diet template id: %v", schedule)
+		c.JSON(http.StatusBadRequest, gin.H{"error": errors.New("diet or Diet Type or diet template id not given")})
 		return
 	}
 
@@ -99,12 +99,13 @@ func SaveDietForClient(c *gin.Context) {
 	}
 
 	dietRecord := model.DietHistory{
-		WeekNumber: weekNumber + 1,
-		ClientID:   clientID,
-		Date:       time.Now(),
-		Weight:     nil,
-		DietType:   schedule.DietType,
-		DietString: &schedule.Diet,
+		WeekNumber:     weekNumber + 1,
+		ClientID:       clientID,
+		Date:           time.Now(),
+		Weight:         nil,
+		DietType:       schedule.DietType,
+		DietString:     &schedule.Diet,
+		DietTemplateID: schedule.DietTemplateID,
 	}
 	if err := db.Create(&dietRecord).Error; err != nil {
 		fmt.Errorf("error: SaveDietForClient | could not create empty diet_history_id %d for client_id %s | err: %v", schedule.Diet, clientID, err.Error())
@@ -302,9 +303,9 @@ func SaveCommonDietForClients(c *gin.Context) {
 		return
 	}
 
-	if req.Diet == "" || req.DietType == 0 {
-		fmt.Errorf("SaveCommonDietForClients | error: request sent without diet or diet type: %v", req)
-		c.JSON(http.StatusBadRequest, gin.H{"error": errors.New("diet or Diet Type not given")})
+	if req.Diet == "" || req.DietType == 0 || req.DietTemplateID == 0 {
+		fmt.Errorf("SaveCommonDietForClients | error: request sent without diet or diet type or diet template id: %v", req)
+		c.JSON(http.StatusBadRequest, gin.H{"error": errors.New("diet or Diet Type or diet template id not given")})
 		return
 	}
 
@@ -336,12 +337,13 @@ func SaveCommonDietForClients(c *gin.Context) {
 		}
 
 		createDietReq = append(createDietReq, model.DietHistory{
-			WeekNumber: weekNumber + 1,
-			GroupID:    group,
-			Date:       time.Now(),
-			Weight:     nil,
-			DietType:   req.DietType,
-			DietString: &req.Diet,
+			WeekNumber:     weekNumber + 1,
+			GroupID:        group,
+			Date:           time.Now(),
+			Weight:         nil,
+			DietType:       req.DietType,
+			DietString:     &req.Diet,
+			DietTemplateID: req.DietTemplateID,
 		})
 	}
 
