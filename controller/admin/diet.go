@@ -3,6 +3,7 @@ package admin
 import (
 	"errors"
 	"fmt"
+	"github.com/cd-Ishita/nutriediet-go/constants"
 	"github.com/cd-Ishita/nutriediet-go/database"
 	"github.com/cd-Ishita/nutriediet-go/helpers"
 	"github.com/cd-Ishita/nutriediet-go/model"
@@ -72,49 +73,35 @@ func SaveDietForClient(c *gin.Context) {
 		return
 	}
 
+	if schedule.Diet == "" || schedule.DietType == 0 {
+		fmt.Errorf("SaveDietForClient | error: request sent without diet or diet type: %v", schedule)
+		c.JSON(http.StatusBadRequest, gin.H{"error": errors.New("diet or Diet Type not given")})
+		return
+	}
+
 	db := database.DB
 
-	//dietHistoryRecord := model.DietHistory{}
-	//err := db.Where("client_id = ?", c.Param("client_id")).Order("date DESC").First(&dietHistoryRecord).Error
-	//if errors.Is(gorm.ErrRecordNotFound, err) {
-	//	c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
-	//	return
-	//} else if err != nil {
-	//	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-	//	return
-	//}
-
-	// a new diet always creates a new record in the diet history table
-	//dietJSON, err := json.Marshal(schedule.Diet)
-	//if err != nil {
-	//	c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to marshal diet to JSON"})
-	//	return
-	//}
-
-	//dietHistory := model.DietHistory{
-	//	ClientID:   clientID,
-	//	WeekNumber: schedule.WeekNumber,
-	//	Date:       time.Now(),
-	//}
-	//
-	//// Save the diet history record to the database
-	//if err := db.Save(&dietHistory).Error; err != nil {
-	//	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-	//	return
-	//}
+	// only regular diets allowed to use this client specific route
+	if schedule.DietType != constants.RegularDiet.Uint32() {
+		fmt.Errorf("SaveDietForClient | error: request sent with wrong diet type, only regular diets allowed on this route %v", schedule)
+		c.JSON(http.StatusBadRequest, gin.H{"error": errors.New("diet type given is not regular diet")})
+		return
+	}
 
 	clientID, _ := strconv.ParseUint(c.Param("client_id"), 10, 64)
 
 	// fetch the week_number of the last diet sent
 	var weekNumber int
 	err := db.Model(&model.DietHistory{}).
-		Where("client_id = ? and diet_type = ?", clientID, schedule.DietType).
+		Where("client_id = ? and diet_type = ? and deleted_at IS NULL", clientID, schedule.DietType).
 		Select("week_number").
 		Order("date DESC").
 		Limit(1).
 		Find(&weekNumber).
 		Error
-	if err != nil {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		weekNumber = 0
+	} else if err != nil {
 		fmt.Errorf("err: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -133,12 +120,6 @@ func SaveDietForClient(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-
-	//if err = db.Table("diet_histories").Where("id = ?", emptyDietRecord.ID).Update("diet", dietJSON).Error; err != nil {
-	//	fmt.Errorf("error: SaveDietForClient | could not save diet for diet_history_id %d for client_id %s | err: %v", schedule.Diet, clientID, err.Error())
-	//	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-	//	return
-	//}
 
 	// Return a success response
 	c.JSON(http.StatusCreated, gin.H{"message": "Diet information saved successfully"})
@@ -330,44 +311,42 @@ func SaveCommonDietForClients(c *gin.Context) {
 		return
 	}
 
-	db := database.DB
-
-	var clientIDs []uint64
-	for _, val := range req.Groups {
-		var groupClientIDs []uint64
-		err := db.Model(&model.Client{}).Where("group_id = ?", val).Select("id").Find(&groupClientIDs).Error
-		if err != nil {
-			fmt.Errorf("error: could not find group clients for group_id %d: %s", val, err.Error())
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		} else if len(groupClientIDs) == 0 {
-			fmt.Errorf("error: could not find group clients for group_id %d", val)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "no count"})
-			return
-		}
-		clientIDs = append(clientIDs, groupClientIDs...)
+	if req.Diet == "" || req.DietType == 0 {
+		fmt.Errorf("SaveCommonDietForClients | error: request sent without diet or diet type: %v", req)
+		c.JSON(http.StatusBadRequest, gin.H{"error": errors.New("diet or Diet Type not given")})
+		return
 	}
 
+	if req.DietType == constants.RegularDiet.Uint32() {
+		fmt.Errorf("SaveCommonDietForClients | error: request sent of type regular diet not allowed on common route: %v", req)
+		c.JSON(http.StatusBadRequest, gin.H{"error": errors.New("regular diet type sent on common diets route")})
+		return
+	}
+
+	db := database.DB
 	var createDietReq []model.DietHistory
-	for _, clientID := range clientIDs {
-		// fetch the week_number of the last diet sent
+	// find the week number of this common diet for each group number
+	for _, group := range req.Groups {
+		// fetch the week number of last common diet of this type sent to this group
 		var weekNumber int
 		err := db.Model(&model.DietHistory{}).
-			Where("client_id = ? and diet_type = ?", clientID, req.DietType).
+			Where("group_id = ? and diet_type = ? and deleted_at IS NULL", group, req.DietType).
 			Select("week_number").
 			Order("date DESC").
 			Limit(1).
 			Find(&weekNumber).
 			Error
-		if err != nil {
-			fmt.Errorf("err: %v", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		if err != nil && errors.Is(gorm.ErrRecordNotFound, err) {
+			weekNumber = 0
+		} else if err != nil {
+			fmt.Errorf("SaveCommonDietForClients | error : fetching the week number for group %d and diet type %v | err: %v", group, req.DietType, err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": err})
 			return
 		}
 
 		createDietReq = append(createDietReq, model.DietHistory{
 			WeekNumber: weekNumber + 1,
-			ClientID:   clientID,
+			GroupID:    group,
 			Date:       time.Now(),
 			Weight:     nil,
 			DietType:   req.DietType,
@@ -376,7 +355,7 @@ func SaveCommonDietForClients(c *gin.Context) {
 	}
 
 	if err := db.Create(&createDietReq).Error; err != nil {
-		fmt.Errorf("error: SaveDietForClient | could not create diets %v for clients %v | err: %v", createDietReq, clientIDs, err.Error())
+		fmt.Errorf("error: SaveCommonDietForClients | could not create diets %v for group %v | err: %v", createDietReq, req.Groups, err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -385,3 +364,38 @@ func SaveCommonDietForClients(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": "Diet information saved successfully"})
 	return
 }
+
+//dietHistoryRecord := model.DietHistory{}
+//err := db.Where("client_id = ?", c.Param("client_id")).Order("date DESC").First(&dietHistoryRecord).Error
+//if errors.Is(gorm.ErrRecordNotFound, err) {
+//	c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+//	return
+//} else if err != nil {
+//	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+//	return
+//}
+
+// a new diet always creates a new record in the diet history table
+//dietJSON, err := json.Marshal(schedule.Diet)
+//if err != nil {
+//	c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to marshal diet to JSON"})
+//	return
+//}
+
+//dietHistory := model.DietHistory{
+//	ClientID:   clientID,
+//	WeekNumber: schedule.WeekNumber,
+//	Date:       time.Now(),
+//}
+//
+//// Save the diet history record to the database
+//if err := db.Save(&dietHistory).Error; err != nil {
+//	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+//	return
+//}
+
+//if err = db.Table("diet_histories").Where("id = ?", emptyDietRecord.ID).Update("diet", dietJSON).Error; err != nil {
+//	fmt.Errorf("error: SaveDietForClient | could not save diet for diet_history_id %d for client_id %s | err: %v", schedule.Diet, clientID, err.Error())
+//	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+//	return
+//}

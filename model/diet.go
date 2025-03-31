@@ -21,6 +21,7 @@ type DietTemplate struct {
 type DietHistory struct {
 	ID         uint      `gorm:"primaryKey;autoIncrement:true" json:"id"`
 	ClientID   uint64    `gorm:"column:client_id;foreignKey:ClientID" json:"client_id,omitempty"`
+	GroupID    int       `gorm:"column:group_id" json:"group_id,omitempty"`
 	WeekNumber int       `gorm:"column:week_number" json:"week_number,omitempty"`
 	Date       time.Time `gorm:"column:date" json:"date,omitempty"`
 	Weight     *float32  `gorm:"column:weight" json:"weight,omitempty"`
