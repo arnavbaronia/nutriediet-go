@@ -24,7 +24,7 @@ func GetDietHistoryForClient(c *gin.Context) {
 	db := database.DB
 
 	var dietHistory []model.DietHistory
-	err := db.Model(&model.DietHistory{}).Where("client_id = ? and deleted_at IS NULL and week_number > 0", c.Param("client_id")).Find(&dietHistory).Error
+	err := db.Model(&model.DietHistory{}).Where("client_id = ? and week_number > 0 and diet_type = ? and deleted_at IS NULL", c.Param("client_id"), constants.RegularDiet.Uint32()).Find(&dietHistory).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		fmt.Errorf("error: diet does not exist for client_id %d", c.Param("client_id"))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -37,27 +37,18 @@ func GetDietHistoryForClient(c *gin.Context) {
 
 	// transform the results into given format
 	var resRegularDiet []model.DietHistory
-	var resDetoxDiet []model.DietHistory
 	for _, diet := range dietHistory {
-		if diet.DietType == 0 {
+		if diet.DietType == constants.RegularDiet.Uint32() {
 			// regular diet
 			resRegularDiet = append(resRegularDiet, diet)
-		} else if diet.DietType == 1 {
-			// detox diet
-			resDetoxDiet = append(resDetoxDiet, diet)
 		}
-
 	}
 
-	c.JSON(http.StatusOK, gin.H{"diet_history_regular": resRegularDiet, "diet_history_detox": resDetoxDiet})
+	c.JSON(http.StatusOK, gin.H{"diet_history_regular": resRegularDiet})
 	return
 }
 
-// SaveDietForClient questions
-// should the week number be input by the UI
-// should the week number be calculated directly
-// should the date be the date of diet updation, or the date calculated using the group etc
-// edit button separately
+// SaveDietForClient used to store regular diets for clients from the client profiles page for ADMIN
 func SaveDietForClient(c *gin.Context) {
 
 	if !helpers.CheckUserType(c, "ADMIN") {
@@ -171,7 +162,7 @@ func GetWeightHistoryForClient(c *gin.Context) {
 
 	db := database.DB
 	var res []model.GetWeightHistoryForClientResponse
-	err := db.Model(model.DietHistory{}).Where("client_id = ? and diet_type = 0", clientID).Select("weight", "date").Find(&res).Error
+	err := db.Model(model.DietHistory{}).Where("client_id = ? and diet_type = ?", clientID, constants.RegularDiet.Uint32()).Select("weight", "date").Find(&res).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		fmt.Errorf("error: could not find diet_history_id %d for client_id %s", clientID, c.Param("client_id"))
 		c.JSON(http.StatusOK, gin.H{"response": nil})
