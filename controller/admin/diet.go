@@ -60,6 +60,7 @@ func SaveDietForClient(c *gin.Context) {
 	// Parse the request body to extract the diet information
 	var schedule model.SaveDietForClientRequest
 	if err := c.BindJSON(&schedule); err != nil {
+		fmt.Errorf("error: could not bind request")
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
