@@ -356,6 +356,42 @@ func SaveCommonDietForClients(c *gin.Context) {
 	return
 }
 
+func GetCommonDietsHistory(c *gin.Context) {
+	if !helpers.CheckUserType(c, "ADMIN") {
+		fmt.Errorf("error: client user not allowed to access")
+		c.JSON(http.StatusUnauthorized, gin.H{"err": "unauthorized access by client"})
+		return
+	}
+
+	db := database.DB
+
+	var dietHistory []model.DietHistory
+	err := db.Model(&model.DietHistory{}).Where("group_id = ? and week_number > 0 and diet_type != ? and deleted_at IS NULL", c.Param("group_id"), constants.RegularDiet.Uint32()).Find(&dietHistory).Error
+	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
+		fmt.Errorf("error: no diets exist does not exist for group_id %s", c.Param("group_id"))
+		c.JSON(http.StatusOK, gin.H{"diet_history_detox_diet": dietHistory, "diet_history_detox_water": dietHistory})
+		return
+	} else if err != nil {
+		fmt.Errorf("error: could not fetch diet for client_id %s", c.Param("client_id"))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// transform the results into given format
+	var resDetoxDiet []model.DietHistory
+	var resDetoxWater []model.DietHistory
+	for _, diet := range dietHistory {
+		if diet.DietType == constants.DetoxDiet.Uint32() {
+			resDetoxDiet = append(resDetoxDiet, diet)
+		} else if diet.DietType == constants.DetoxWater.Uint32() {
+			resDetoxWater = append(resDetoxWater, diet)
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{"diet_history_detox_diet": resDetoxDiet, "diet_history_detox_water": resDetoxWater})
+	return
+}
+
 //dietHistoryRecord := model.DietHistory{}
 //err := db.Where("client_id = ?", c.Param("client_id")).Order("date DESC").First(&dietHistoryRecord).Error
 //if errors.Is(gorm.ErrRecordNotFound, err) {
