@@ -23,9 +23,14 @@ func GetDietHistoryForClient(c *gin.Context) {
 
 	db := database.DB
 
-	var dietHistory []model.DietHistory
-	err := db.Model(&model.DietHistory{}).Where("client_id = ? and week_number > 0 and diet_type = ? and deleted_at IS NULL", c.Param("client_id"), constants.RegularDiet.Uint32()).Find(&dietHistory).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
+	var dietHistory []model.DietHistoryResponse
+	err := db.Model(&model.DietHistory{}).
+		Joins("join diet_templates on diet_template_id = diet_templates.id").
+		Select("diet_histories.*, diet_templates.name as diet_template_name").
+		Where("client_id = ? and week_number > 0 and diet_type = ? and diet_histories.deleted_at IS NULL", c.Param("client_id"), constants.RegularDiet.Uint32()).
+		Find(&dietHistory).
+		Error
+	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
 		fmt.Errorf("error: diet does not exist for client_id %d", c.Param("client_id"))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -36,7 +41,7 @@ func GetDietHistoryForClient(c *gin.Context) {
 	}
 
 	// transform the results into given format
-	var resRegularDiet []model.DietHistory
+	var resRegularDiet []model.DietHistoryResponse
 	for _, diet := range dietHistory {
 		if diet.DietType == constants.RegularDiet.Uint32() {
 			// regular diet
@@ -164,7 +169,11 @@ func GetWeightHistoryForClient(c *gin.Context) {
 
 	db := database.DB
 	var res []model.GetWeightHistoryForClientResponse
-	err := db.Model(model.DietHistory{}).Where("client_id = ? and diet_type = ?", clientID, constants.RegularDiet.Uint32()).Select("weight", "date").Find(&res).Error
+	err := db.Model(model.DietHistory{}).
+		Where("client_id = ? and diet_type = ?", clientID, constants.RegularDiet.Uint32()).
+		Select("weight", "date").
+		Find(&res).
+		Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		fmt.Errorf("error: could not find diet_history_id %d for client_id %s", clientID, c.Param("client_id"))
 		c.JSON(http.StatusOK, gin.H{"response": nil})
@@ -195,7 +204,7 @@ func UpdateWeightForClientByAdmin(c *gin.Context) {
 
 	db := database.DB
 	dietRecord := model.DietHistory{}
-	err := db.Table("diet_histories").Where("client_id = ? and diet_type = 0", c.Param("client_id")).Order("date DESC").Select("id").First(&dietRecord).Error
+	err := db.Table("diet_histories").Where("client_id = ? and diet_type = ?", c.Param("client_id"), constants.RegularDiet.Uint32()).Order("date DESC").Select("id").First(&dietRecord).Error
 	if err != nil {
 		fmt.Println("Could not retrieve diet record for client_id: " + c.Param("client_id"))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -209,7 +218,7 @@ func UpdateWeightForClientByAdmin(c *gin.Context) {
 		return
 	}
 
-	if err := db.Table("diet_histories").Where("id = ? and diet_type = 0", dietRecord.ID).Updates(model.DietHistory{
+	if err := db.Table("diet_histories").Where("id = ? and diet_type = ?", dietRecord.ID, constants.RegularDiet.Uint32()).Updates(model.DietHistory{
 		Weight:   &req.Weight,
 		Feedback: req.Feedback,
 	}).Error; err != nil {
@@ -368,8 +377,13 @@ func GetCommonDietsHistory(c *gin.Context) {
 
 	db := database.DB
 
-	var dietHistory []model.DietHistory
-	err := db.Model(&model.DietHistory{}).Where("group_id = ? and week_number > 0 and diet_type != ? and deleted_at IS NULL", c.Param("group_id"), constants.RegularDiet.Uint32()).Find(&dietHistory).Error
+	var dietHistory []model.DietHistoryResponse
+	err := db.Model(&model.DietHistory{}).
+		Joins("join diet_templates on diet_template_id = diet_templates.id").
+		Select("diet_histories.*, diet_templates.name as diet_template_name").
+		Where("group_id = ? and week_number > 0 and diet_type != ? and diet_histories.deleted_at IS NULL", c.Param("group_id"), constants.RegularDiet.Uint32()).
+		Find(&dietHistory).
+		Error
 	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
 		fmt.Errorf("error: no diets exist does not exist for group_id %s", c.Param("group_id"))
 		c.JSON(http.StatusOK, gin.H{"diet_history_detox_diet": dietHistory, "diet_history_detox_water": dietHistory})
@@ -381,8 +395,8 @@ func GetCommonDietsHistory(c *gin.Context) {
 	}
 
 	// transform the results into given format
-	var resDetoxDiet []model.DietHistory
-	var resDetoxWater []model.DietHistory
+	var resDetoxDiet []model.DietHistoryResponse
+	var resDetoxWater []model.DietHistoryResponse
 	for _, diet := range dietHistory {
 		if diet.DietType == constants.DetoxDiet.Uint32() {
 			resDetoxDiet = append(resDetoxDiet, diet)
