@@ -3,6 +3,7 @@ package client
 import (
 	"errors"
 	"fmt"
+	"github.com/cd-Ishita/nutriediet-go/constants"
 	"github.com/cd-Ishita/nutriediet-go/middleware"
 	"net/http"
 	"time"
@@ -48,7 +49,7 @@ func UpdateWeightForClient(c *gin.Context) {
 	}
 
 	dietRecord := model.DietHistory{}
-	err = db.Table("diet_histories").Where("client_id = ? and diet_type = 0", c.Param("client_id")).Order("date DESC").Select("id").First(&dietRecord).Error
+	err = db.Table("diet_histories").Where("client_id = ? and diet_type = ?", c.Param("client_id"), constants.RegularDiet.Uint32()).Order("date DESC").Select("id").First(&dietRecord).Error
 	if err != nil {
 		fmt.Println("Could not retrieve diet record for client_id: " + c.Param("client_id"))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -62,7 +63,7 @@ func UpdateWeightForClient(c *gin.Context) {
 		return
 	}
 
-	if err = db.Table("diet_histories").Where("id = ? and diet_type = 0", dietRecord.ID).Update("weight", req.Weight).Update("feedback", req.Feedback).Error; err != nil {
+	if err = db.Table("diet_histories").Where("id = ? and diet_type = ?", dietRecord.ID, constants.RegularDiet.Uint32()).Update("weight", req.Weight).Update("feedback", req.Feedback).Error; err != nil {
 		fmt.Println("Error while saving client diet record", dietRecord)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -111,7 +112,7 @@ func IsWeightUpdationAllowed(clientId string) (bool, error) {
 
 	var date time.Time
 
-	err := db.Table("diet_histories").Select("date").Where("client_id = ?", clientId).Order("date DESC").Limit(1).Find(&date).Error
+	err := db.Table("diet_histories").Select("date").Where("client_id = ? and diet_type = ? and deleted_at IS NULL", clientId, constants.RegularDiet.Uint32()).Order("date DESC").Limit(1).Find(&date).Error
 	if err != nil {
 		return false, err
 	}
