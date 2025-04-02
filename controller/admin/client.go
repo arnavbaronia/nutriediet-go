@@ -51,12 +51,20 @@ func GetAllClients(c *gin.Context) {
 		return
 	}
 
+	var activeClients []model.ClientMiniInfo
+	var inactiveClients []model.ClientMiniInfo
 	for _, res := range lastDietDates {
 		index := clientIDMap[res.ClientID]
 		clients[index].LastDietDate = res.Date
+
+		if clients[index].IsActive {
+			activeClients = append(activeClients, clients[index])
+		} else {
+			inactiveClients = append(inactiveClients, clients[index])
+		}
 	}
 
-	c.JSON(http.StatusOK, gin.H{"clients": clients})
+	c.JSON(http.StatusOK, gin.H{"active_clients": activeClients, "inactive_clients": inactiveClients})
 	return
 }
 
