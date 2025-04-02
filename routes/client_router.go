@@ -61,8 +61,8 @@ func UserRoutes(incomingRoutes *gin.Engine) {
 	incomingRoutes.POST("/admin/:client_id/delete_diet", adminController.DeleteDietForClientByAdmin)
 	incomingRoutes.POST("/admin/common_diet", adminController.SaveCommonDietForClients)
 	incomingRoutes.GET("/admin/common_diet/:group_id", adminController.GetCommonDietsHistory)
-	incomingRoutes.GET("/admin/common_diet/:group_id/update", adminController.EditCommonDiet)
-	incomingRoutes.GET("/admin/common_diet/:group_id/delete_diet", adminController.DeleteCommonDiet)
+	incomingRoutes.POST("/admin/common_diet/:group_id/update", adminController.EditCommonDiet)
+	incomingRoutes.POST("/admin/common_diet/:group_id/delete_diet", adminController.DeleteCommonDiet)
 
 	// <<<<<<<<===============================================================================>>>>>>
 
@@ -86,4 +86,7 @@ func UserRoutes(incomingRoutes *gin.Engine) {
 	incomingRoutes.POST("/admin/exercise/new", adminController.CreateExercise)
 	incomingRoutes.POST("/admin/exercise/:exercise_id", adminController.UpdateExerciseByID)
 	incomingRoutes.POST("/admin/exercise/:exercise_id/delete", adminController.DeleteExerciseByID)
+
+	// ADMIN - MOTIVATION
+	incomingRoutes.POST("/admin/motivations/new", adminController.CreateNewMotivation)
 }

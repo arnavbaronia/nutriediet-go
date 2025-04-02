@@ -17,3 +17,7 @@ const (
 func (d DietType) Uint32() uint32 {
 	return uint32(d)
 }
+
+const (
+	Motivation = "MOTIVATION"
+)
