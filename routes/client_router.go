@@ -62,6 +62,7 @@ func UserRoutes(incomingRoutes *gin.Engine) {
 	incomingRoutes.POST("/admin/common_diet", adminController.SaveCommonDietForClients)
 	incomingRoutes.GET("/admin/common_diet/:group_id", adminController.GetCommonDietsHistory)
 	incomingRoutes.GET("/admin/common_diet/:group_id/update", adminController.EditCommonDiet)
+	incomingRoutes.GET("/admin/common_diet/:group_id/delete_diet", adminController.DeleteCommonDiet)
 
 	// <<<<<<<<===============================================================================>>>>>>
 

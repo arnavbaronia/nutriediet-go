@@ -444,6 +444,74 @@ func EditCommonDiet(c *gin.Context) {
 	return
 }
 
+func DeleteCommonDiet(c *gin.Context) {
+	if !helpers.CheckUserType(c, "ADMIN") {
+		fmt.Errorf("error: client user not allowed to access")
+		c.JSON(http.StatusUnauthorized, gin.H{"err": "unauthorized access by client"})
+		return
+	}
+
+	groupID := c.Param("group_id")
+	if groupID == "" || groupID == "0" {
+		fmt.Errorf("error: client_id cannot be empty string")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "client_id cannot be empty string"})
+		return
+	}
+
+	// request contains the diet id to be deleted
+	req := uint(0)
+	if err := c.BindJSON(&req); err != nil {
+		fmt.Println("Wrong request, cannot be extracted. For client_id: " + c.Param("client_id"))
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	db := database.DB
+	// verify that the given id exists and is the latest diet of that type
+	diet := model.DietHistory{}
+	err := db.Where("id = ? and group_id = ? and deleted_at IS NULL", req, groupID).Find(&diet).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		fmt.Errorf("error: could not find diet_history_id %d for groupID %s", req, groupID)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	} else if err != nil {
+		fmt.Println("Could not retrieve diet record for groupID: " + c.Param("group_id"))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// try to see if a more recent diet of that type exists
+	var latestDiet model.DietHistory
+	err = db.Model(&model.DietHistory{}).
+		Where("group_id = ? and diet_type = ? and deleted_at IS NULL", groupID, diet.DietType).
+		Order("date DESC, created_at DESC").
+		Limit(1).
+		First(&latestDiet).
+		Error
+	if err != nil {
+		fmt.Errorf("error: could not find diet_history_id for group_id %s | err: %v", groupID, err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if latestDiet.ID != diet.ID {
+		fmt.Errorf("error: trying to delete older diet, not allowed")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "bad delete request"})
+		return
+	}
+	timeNow := time.Now()
+	diet.DeletedAt = &timeNow
+
+	err = db.Model(&model.DietHistory{}).Where("id = ?", diet.ID).Update("deleted_at", timeNow).Error
+	if err != nil {
+		fmt.Errorf("error: could not delete diet_history_id for group_id %s | err: %v", groupID, err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{})
+}
+
 //dietHistoryRecord := model.DietHistory{}
 //err := db.Where("client_id = ?", c.Param("client_id")).Order("date DESC").First(&dietHistoryRecord).Error
 //if errors.Is(gorm.ErrRecordNotFound, err) {
