@@ -90,7 +90,6 @@ func CreateDietTemplate(c *gin.Context) {
 	}
 
 	db := database.DB
-
 	err := db.Table("diet_templates").Where("deleted_at IS NULL and name = ?", template.Name).First(&model.DietTemplate{}).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		// continue

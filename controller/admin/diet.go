@@ -70,7 +70,7 @@ func SaveDietForClient(c *gin.Context) {
 		return
 	}
 
-	if schedule.Diet == "" || schedule.DietType == 0 || schedule.DietTemplateID == 0 {
+	if schedule.Diet == "" || schedule.DietType == 0 {
 		fmt.Errorf("SaveDietForClient | error: request sent without diet or diet type or diet template id: %v", schedule)
 		c.JSON(http.StatusBadRequest, gin.H{"error": errors.New("diet or Diet Type or diet template id not given")})
 		return
@@ -313,7 +313,7 @@ func SaveCommonDietForClients(c *gin.Context) {
 		return
 	}
 
-	if req.Diet == "" || req.DietType == 0 || req.DietTemplateID == 0 {
+	if req.Diet == "" || req.DietType == 0 {
 		fmt.Errorf("SaveCommonDietForClients | error: request sent without diet or diet type or diet template id: %v", req)
 		c.JSON(http.StatusBadRequest, gin.H{"error": errors.New("diet or Diet Type or diet template id not given")})
 		return
