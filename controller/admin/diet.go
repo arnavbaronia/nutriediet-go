@@ -409,6 +409,41 @@ func GetCommonDietsHistory(c *gin.Context) {
 	return
 }
 
+func EditCommonDiet(c *gin.Context) {
+
+	if !helpers.CheckUserType(c, "ADMIN") {
+		fmt.Errorf("error: client user not allowed to access")
+		c.JSON(http.StatusUnauthorized, gin.H{"err": "unauthorized access by client"})
+		return
+	}
+
+	// Parse the request body to extract the diet information
+	var schedule model.EditDietForClientRequest
+	if err := c.BindJSON(&schedule); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	db := database.DB
+	groupID, _ := strconv.ParseUint(c.Param("group_id"), 10, 64)
+
+	if schedule.DietType == constants.RegularDiet.Uint32() {
+		fmt.Errorf("error: wrong diet type %v | group_id: %d", schedule, groupID)
+		c.JSON(http.StatusBadRequest, gin.H{"error": errors.New("wrong diet type")})
+		return
+	}
+
+	if err := db.Table("diet_histories").Where("id = ? and diet_type = ? and group_id = ?", schedule.DietID, schedule.DietType, groupID).Update("diet_string", schedule.Diet).Error; err != nil {
+		fmt.Errorf("error: SaveDietForClient | could not save diet for diet_history_id %d for client_id %s | err: %v", schedule.Diet, c.Param("client_id"), err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Return a success response
+	c.JSON(http.StatusOK, gin.H{"message": "Diet information saved successfully"})
+	return
+}
+
 //dietHistoryRecord := model.DietHistory{}
 //err := db.Where("client_id = ?", c.Param("client_id")).Order("date DESC").First(&dietHistoryRecord).Error
 //if errors.Is(gorm.ErrRecordNotFound, err) {
