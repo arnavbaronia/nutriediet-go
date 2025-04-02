@@ -42,7 +42,7 @@ type ClientMiniInfo struct {
 	ID              uint64    `gorm:"primaryKey;autoIncrement:true" json:"id"`
 	Name            string    `gorm:"column:name" json:"name,omitempty"`
 	DietitianId     int       `gorm:"column:dietitian_id" json:"dietitian_id,omitempty"`
-	Group           int       `gorm:"column:\"group\"" json:"group,omitempty"`
+	GroupId         int       `gorm:"column:group_id" json:"group_id,omitempty"`
 	Email           string    `gorm:"column:email" json:"email,omitempty"`
 	IsActive        bool      `gorm:"column:is_active" json:"is_active,omitempty"`
 	NextPaymentDate time.Time `gorm:"column:next_payment_date" json:"next_payment_date,omitempty"`
