@@ -25,7 +25,7 @@ func GetDietHistoryForClient(c *gin.Context) {
 
 	var dietHistory []model.DietHistoryResponse
 	err := db.Model(&model.DietHistory{}).
-		Joins("join diet_templates on diet_template_id = diet_templates.id").
+		Joins("left outer join diet_templates on diet_template_id = diet_templates.id").
 		Select("diet_histories.*, diet_templates.name as diet_template_name").
 		Where("client_id = ? and week_number > 0 and diet_type = ? and diet_histories.deleted_at IS NULL", c.Param("client_id"), constants.RegularDiet.Uint32()).
 		Find(&dietHistory).
