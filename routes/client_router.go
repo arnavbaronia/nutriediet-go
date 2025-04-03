@@ -89,4 +89,7 @@ func UserRoutes(incomingRoutes *gin.Engine) {
 
 	// ADMIN - MOTIVATION
 	incomingRoutes.POST("/admin/motivations/new", adminController.CreateNewMotivation)
+	incomingRoutes.POST("/admin/motivation/:motivation_id/unpost", adminController.UnpostMotivation)
+	incomingRoutes.POST("/admin/motivation/:motivation_id/post", adminController.PostMotivation)
+	incomingRoutes.GET("/admin/motivation", adminController.GetAllMotivations)
 }

@@ -18,3 +18,9 @@ type CreateNotificationReq struct {
 	Text          string `json:"text"`
 	PostingActive bool   `json:"posting_active,omitempty"`
 }
+
+type UpdateNotificationReq struct {
+	ID            uint   `json:"id"`
+	Text          string `json:"text"`
+	PostingActive bool   `json:"posting_active"`
+}
