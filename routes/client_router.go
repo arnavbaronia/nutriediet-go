@@ -25,8 +25,7 @@ func UserRoutes(incomingRoutes *gin.Engine) {
 	incomingRoutes.GET("/clients/:client_id/weight_update", clientController.WeightUpdationStatus)
 
 	// CLIENT - DIET
-	incomingRoutes.GET("/clients/:client_id/diet", clientController.GetRegularDietForClient)
-	incomingRoutes.GET("/clients/:client_id/detox_diet", clientController.GetDetoxDietForClient)
+	incomingRoutes.GET("/clients/:client_id/diet", clientController.GetDietsForClient)
 
 	// CLIENT - EXERCISE
 	incomingRoutes.GET("/clients/:client_id/exercise", clientController.GetExercisesForClient)
