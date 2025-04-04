@@ -38,6 +38,9 @@ func UserRoutes(incomingRoutes *gin.Engine) {
 	// CLIENT - RECIPE
 	incomingRoutes.GET("clients/:client_id/recipe", clientController.GetRecipesForClient)
 
+	// CLIENT - MOTIVATION
+	incomingRoutes.GET("clients/:client_id/motivation", clientController.GetActiveMotivationsForClients)
+
 	// EMAIL-BASED PROFILE CREATION (Separate from client routes to avoid conflicts)
 	incomingRoutes.POST("/users/:email/create_profile", clientController.CreateProfileByClient)
 
