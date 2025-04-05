@@ -32,7 +32,7 @@ func GetDietsForClient(c *gin.Context) {
 	clientID := c.Param("client_id")
 
 	var groupID int
-	err := db.Model(&model.Client{}).Where("id = ? and deleted_at IS NULL", c.Param("client_id")).Find(&groupID).Error
+	err := db.Model(&model.Client{}).Where("id = ? and deleted_at IS NULL", c.Param("client_id")).Select("group_id").Find(&groupID).Error
 	if err != nil {
 		fmt.Errorf("error: GetDetoxDietForClient | could not fetch client information %d | err: %v", c.Param("client_id"), err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -72,7 +72,7 @@ func getDietForClient(clientId *string, group_id *int, dietType uint32) (*string
 	var diet sql.NullString
 	if dietType == constants.RegularDiet.Uint32() && clientId != nil {
 		err := db.Model(&model.DietHistory{}).
-			Where("client_id = ? and diet_type = ?", *clientId, dietType).
+			Where("client_id = ? and diet_type = ? and deleted_at IS NULL", *clientId, dietType).
 			Order("date DESC, created_at DESC").
 			Limit(1).
 			Pluck("diet_string", &diet).
@@ -83,7 +83,7 @@ func getDietForClient(clientId *string, group_id *int, dietType uint32) (*string
 		}
 	} else if (dietType == constants.DetoxDiet.Uint32() || dietType == constants.DetoxWater.Uint32()) && group_id != nil {
 		err := db.Model(&model.DietHistory{}).
-			Where("group_id = ? and diet_type = ?", *group_id, dietType).
+			Where("group_id = ? and diet_type = ? and deleted_at IS NULL", *group_id, dietType).
 			Order("date DESC, created_at DESC").
 			Limit(1).
 			Pluck("diet_string", &diet).
