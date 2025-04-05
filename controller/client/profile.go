@@ -232,6 +232,9 @@ func migrateClientProfileByClientUpdate(updatedInfo model.Client) model.Client {
 		Comments:          updatedInfo.Comments,
 		DietRecall:        updatedInfo.DietRecall,
 		Locality:          updatedInfo.Locality,
+		// default values
+		GroupID:     1,
+		DietitianId: 1,
 	}
 	return client
 }

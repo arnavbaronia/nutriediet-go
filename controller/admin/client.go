@@ -126,7 +126,8 @@ func UpdateClientInfo(c *gin.Context) {
 		return
 	}
 
-	upsertedClient := migrateClientInfoForAdmin(req, client)
+	isSuperAdmin := c.GetString("email") == constants.SuperAdminEmail
+	upsertedClient := migrateClientInfoForAdmin(req, client, isSuperAdmin)
 	err = db.Save(&upsertedClient).Error
 	if err != nil {
 		fmt.Errorf("error: could not save client information | client_info: %v | err: %v", upsertedClient, err)
@@ -138,48 +139,81 @@ func UpdateClientInfo(c *gin.Context) {
 	return
 }
 
-func migrateClientInfoForAdmin(updatedInfo model.Client, existingInfo model.Client) model.Client {
+func migrateClientInfoForAdmin(updatedInfo model.Client, existingInfo model.Client, isSuperAdmin bool) model.Client {
 	// TODO: do we want admin to be able to update the starting weight in cases where client comes back
 
-	client := model.Client{
-		ID:                existingInfo.ID,
-		Name:              updatedInfo.Name,
-		Age:               updatedInfo.Age,
-		City:              updatedInfo.City,
-		PhoneNumber:       updatedInfo.PhoneNumber,
-		Package:           updatedInfo.Package,
-		AmountPaid:        updatedInfo.AmountPaid,
-		Remarks:           updatedInfo.Remarks,
-		DietitianId:       updatedInfo.DietitianId,
-		GroupID:           updatedInfo.GroupID,
-		Email:             existingInfo.Email,
-		Height:            updatedInfo.Height,
-		StartingWeight:    existingInfo.StartingWeight,
-		DietaryPreference: updatedInfo.DietaryPreference,
-		MedicalHistory:    updatedInfo.MedicalHistory,
-		Allergies:         updatedInfo.Allergies,
-		Stay:              updatedInfo.Stay,
-		Exercise:          updatedInfo.Exercise,
-		Comments:          updatedInfo.Comments,
-		DietRecall:        updatedInfo.DietRecall,
-		IsActive:          updatedInfo.IsActive,
-		Locality:          updatedInfo.Locality,
+	if isSuperAdmin {
+		if _, exists := constants.PackageDayMap[updatedInfo.Package]; exists && updatedInfo.Package != "" {
+			existingInfo.Package = updatedInfo.Package
+		}
+		if updatedInfo.TotalAmount != 0 {
+			existingInfo.TotalAmount = updatedInfo.TotalAmount
+		}
+		if updatedInfo.AmountPaid != 0 {
+			existingInfo.AmountPaid = updatedInfo.AmountPaid
+		}
+		existingInfo.AmountDue = existingInfo.TotalAmount - existingInfo.AmountPaid
+
+		if updatedInfo.LastPaymentDate != nil {
+			existingInfo.LastPaymentDate = updatedInfo.LastPaymentDate
+			nextPaymentDate := existingInfo.LastPaymentDate.AddDate(0, 0, constants.PackageDayMap[existingInfo.Package])
+			existingInfo.NextPaymentDate = &nextPaymentDate
+		}
 	}
 
-	if updatedInfo.DateOfJoining != nil {
-		client.DateOfJoining = updatedInfo.DateOfJoining
+	if updatedInfo.Name != "" {
+		existingInfo.Name = updatedInfo.Name
+	}
+	if updatedInfo.Age != 0 {
+		existingInfo.Age = updatedInfo.Age
+	}
+	if updatedInfo.City != "" {
+		existingInfo.City = updatedInfo.City
+	}
+	if updatedInfo.PhoneNumber != "" {
+		existingInfo.PhoneNumber = updatedInfo.PhoneNumber
+	}
+	if updatedInfo.Remarks != "" {
+		existingInfo.Remarks = updatedInfo.Remarks
+	}
+	if updatedInfo.DietitianId != 0 {
+		existingInfo.DietitianId = updatedInfo.DietitianId
+	}
+	if updatedInfo.GroupID != 0 {
+		existingInfo.GroupID = updatedInfo.GroupID
+	}
+	if updatedInfo.Height != 0 {
+		existingInfo.Height = updatedInfo.Height
+	}
+	if updatedInfo.StartingWeight != 0 {
+		existingInfo.StartingWeight = updatedInfo.StartingWeight
+	}
+	if updatedInfo.DietaryPreference != "" {
+		existingInfo.DietaryPreference = updatedInfo.DietaryPreference
+	}
+	if updatedInfo.MedicalHistory != "" {
+		existingInfo.MedicalHistory = updatedInfo.MedicalHistory
+	}
+	if updatedInfo.Allergies != "" {
+		existingInfo.Allergies = updatedInfo.Allergies
+	}
+	if updatedInfo.Stay != "" {
+		existingInfo.Stay = updatedInfo.Stay
+	}
+	if updatedInfo.Exercise != "" {
+		existingInfo.Exercise = updatedInfo.Exercise
+	}
+	if updatedInfo.Comments != "" {
+		existingInfo.Comments = updatedInfo.Comments
+	}
+	if updatedInfo.DietRecall != "" {
+		existingInfo.DietRecall = updatedInfo.DietRecall
+	}
+	if updatedInfo.Locality != "" {
+		existingInfo.Locality = updatedInfo.Locality
 	}
 
-	if updatedInfo.LastPaymentDate != nil {
-		client.LastPaymentDate = updatedInfo.LastPaymentDate
-		nextPaymentDate := client.LastPaymentDate.AddDate(0, 0, constants.PackageDayMap[updatedInfo.Package])
-		client.NextPaymentDate = &nextPaymentDate
-	}
-
-	if existingInfo.CreatedAt != nil {
-		client.CreatedAt = existingInfo.CreatedAt
-	}
-	return client
+	return existingInfo
 }
 
 // deactivation of client account handled by a separate API

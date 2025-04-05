@@ -10,7 +10,9 @@ type Client struct {
 	PhoneNumber       string     `gorm:"column:phone_number" json:"phone_number,omitempty"`
 	DateOfJoining     *time.Time `gorm:"column:date_of_joining" json:"date_of_joining,omitempty"`
 	Package           string     `gorm:"column:package" json:"package,omitempty"`
+	TotalAmount       int64      `gorm:"column:total_amount" json:"total_amount,omitempty"`
 	AmountPaid        int64      `gorm:"column:amount_paid" json:"amount_paid,omitempty"`
+	AmountDue         int64      `gorm:"column:amount_due" json:"amount_due,omitempty"`
 	LastPaymentDate   *time.Time `gorm:"column:last_payment_date" json:"last_payment_date,omitempty"`
 	NextPaymentDate   *time.Time `gorm:"column:next_payment_date" json:"next_payment_date,omitempty"`
 	Remarks           string     `gorm:"column:remarks" json:"remarks,omitempty"`

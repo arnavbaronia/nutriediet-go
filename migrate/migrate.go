@@ -2,7 +2,6 @@ package main
 
 import (
 	database "github.com/cd-Ishita/nutriediet-go/database"
-	"github.com/cd-Ishita/nutriediet-go/model"
 )
 
 func init() {
@@ -16,10 +15,23 @@ func main() {
 	//database.DB.AutoMigrate(&model.Client{})
 	//database.DB.AutoMigrate(&model.Exercise{})
 	//database.DB.AutoMigrate(&model.UserAuth{})
-	database.DB.AutoMigrate(&model.Notification{})
-
-	//dummyData()
+	//database.DB.AutoMigrate(&model.Notification{})
+	//database.DB.AutoMigrate(&model.Payment{})
+	//dummyData1()
 }
+
+//func dummyData1() {
+//	userAuth := []model.UserAuth{
+//		{
+//			FirstName: "Swapna",
+//			LastName: "Boyapalli",
+//
+//		},
+//		{},
+//		{},
+//		{},
+//	}
+//}
 
 //func dummyData() {
 //	loc, _ := time.LoadLocation("Asia/Kolkata")
