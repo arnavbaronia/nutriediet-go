@@ -49,4 +49,5 @@ type ClientMiniInfo struct {
 	IsActive        bool      `gorm:"column:is_active" json:"is_active,omitempty"`
 	NextPaymentDate time.Time `gorm:"column:next_payment_date" json:"next_payment_date,omitempty"`
 	LastDietDate    time.Time `json:"last_diet_date,omitempty"`
+	AmountDue       int64     `gorm:"column:amount_due" json:"amount_due,omitempty"`
 }
