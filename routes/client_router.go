@@ -36,7 +36,7 @@ func UserRoutes(incomingRoutes *gin.Engine) {
 	incomingRoutes.GET("/clients/:client_id/profile_created", clientController.HasClientCreatedProfile)
 
 	// CLIENT - RECIPE
-	incomingRoutes.GET("clients/:client_id/recipe", clientController.GetRecipesForClient)
+	//incomingRoutes.GET("clients/:client_id/recipe", clientController.GetRecipesForClient)
 
 	// CLIENT - MOTIVATION
 	incomingRoutes.GET("clients/:client_id/motivation", clientController.GetActiveMotivationsForClients)
@@ -76,11 +76,13 @@ func UserRoutes(incomingRoutes *gin.Engine) {
 	incomingRoutes.POST("/admin/diet_templates/:diet_template_id/delete", adminController.DeleteDietTemplateByID)
 
 	// ADMIN - RECIPES
-	incomingRoutes.GET("/admin/recipe/:id", adminController.GetRecipeByID)
-	incomingRoutes.POST("/admin/recipe/:id", adminController.UpdateRecipeByID)
-	incomingRoutes.POST("/admin/recipe/new", adminController.CreateRecipe)
-	incomingRoutes.POST("/admin/recipe/:id/delete", adminController.DeleteRecipeByID)
+	//incomingRoutes.GET("/admin/recipe/:id", adminController.GetRecipeByID)
+	//incomingRoutes.POST("/admin/recipe/:id", adminController.UpdateRecipeByID)
+	//incomingRoutes.POST("/admin/recipe/new", adminController.CreateRecipe)
+	//incomingRoutes.POST("/admin/recipe/:id/delete", adminController.DeleteRecipeByID)
 	incomingRoutes.GET("/admin/recipes", adminController.GetListOfRecipes)
+	incomingRoutes.POST("/admin/recipes/upload", adminController.UploadRecipeImage)
+	incomingRoutes.GET("/admin/recipes/:recipe_id", adminController.GetRecipeImageForAdmin)
 
 	// ADMIN - EXERCISES
 	incomingRoutes.GET("/admin/exercises", adminController.GetListOfExercises)

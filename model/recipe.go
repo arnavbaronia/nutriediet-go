@@ -3,10 +3,11 @@ package model
 import "time"
 
 type Recipe struct {
-	ID          uint   `gorm:"primaryKey;autoIncrement:true" json:"id"`
-	Name        string `gorm:"column:name" json:"name,omitempty"`
-	Ingredients string `gorm:"column:ingredients;type:text" json:"ingredients,omitempty"`
-	Preparation string `gorm:"column:preparation;type:text" json:"preparation,omitempty"`
+	ID       uint   `gorm:"primaryKey;autoIncrement:true" json:"id"`
+	Name     string `gorm:"column:name" json:"name,omitempty"`
+	ImageURL string `gorm:"column:image_url" json:"image_url,omitempty"`
+	//Ingredients string `gorm:"column:ingredients;type:text" json:"ingredients,omitempty"`
+	//Preparation string `gorm:"column:preparation;type:text" json:"preparation,omitempty"`
 
 	// POSTGRES fields
 	//CreatedAt   *time.Time `gorm:"column:created_at;type:timestamp not null;default:CURRENT_TIMESTAMP;" json:"created_at"`

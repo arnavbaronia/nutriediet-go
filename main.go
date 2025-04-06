@@ -6,11 +6,10 @@ import (
 	"time"
 
 	"github.com/cd-Ishita/nutriediet-go/controller"
+	database "github.com/cd-Ishita/nutriediet-go/database"
 	"github.com/cd-Ishita/nutriediet-go/routes"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-
-	database "github.com/cd-Ishita/nutriediet-go/database"
 )
 
 func main() {
@@ -35,6 +34,7 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}
 	router.Use(cors.New(config))
+	router.Static("/images", "./images")
 
 	routes.AuthRoutes(router)
 	routes.UserRoutes(router)

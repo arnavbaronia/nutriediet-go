@@ -13,11 +13,12 @@ func main() {
 	//database.DB.AutoMigrate(&model.Client{})
 	//database.DB.AutoMigrate(&model.DietHistory{})
 	//database.DB.AutoMigrate(&model.DietTemplate{})
-	database.DB.AutoMigrate(&model.Client{})
+	//database.DB.AutoMigrate(&model.Client{})
 	//database.DB.AutoMigrate(&model.Exercise{})
 	//database.DB.AutoMigrate(&model.UserAuth{})
 	//database.DB.AutoMigrate(&model.Notification{})
 	//database.DB.AutoMigrate(&model.Payment{})
+	database.DB.AutoMigrate(&model.Recipe{})
 	//dummyData1()
 }
 
