@@ -95,7 +95,8 @@ func getDietForClient(clientId *string, group_id *int, dietType uint32) (*string
 	}
 
 	if !diet.Valid {
-		return nil, errors.New("no diet")
+		fmt.Errorf("found invalid diet for client %s or group %d of diet_type %d", clientId, group_id, dietType)
+		return nil, nil
 	}
 	return &diet.String, nil
 }
