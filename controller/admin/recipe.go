@@ -3,15 +3,16 @@ package admin
 import (
 	"errors"
 	"fmt"
+	"net/http"
+	"os"
+	"path/filepath"
+
 	"github.com/cd-Ishita/nutriediet-go/database"
 	"github.com/cd-Ishita/nutriediet-go/helpers"
 	"github.com/cd-Ishita/nutriediet-go/model"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
-	"net/http"
-	"os"
-	"path/filepath"
 )
 
 //func GetRecipeByID(c *gin.Context) {
@@ -211,7 +212,7 @@ func UploadRecipeImage(c *gin.Context) {
 	}
 
 	// Return URL to access image later
-	imageURL := fmt.Sprintf("/images/%s", file.Filename)
+	imageURL := fmt.Sprintf("/images/%s", filename)
 
 	recipe := model.Recipe{
 		Name:     imageName,
