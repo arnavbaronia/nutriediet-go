@@ -257,3 +257,73 @@ func GetRecipeImageForAdmin(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"recipe": recipe})
 	return
 }
+
+func UpdateRecipeImageByAdmin(c *gin.Context) {
+	if !helpers.CheckUserType(c, "ADMIN") {
+		fmt.Errorf("error: client user not allowed to access")
+		c.JSON(http.StatusUnauthorized, gin.H{"err": "unauthorized access by client"})
+		return
+	}
+
+	db := database.DB
+
+	var recipe model.Recipe
+	err := db.Table("recipes").Where("id = ? AND deleted_at IS NULL", c.Param("recipe_id")).First(&recipe).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		fmt.Errorf("error: UpdateRecipeImageByAdmin recipe with id %s does not exist", c.Param("recipe_id"))
+		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+		return
+	} else if err != nil {
+		fmt.Errorf("error: UpdateRecipeImageByAdmin could not find the recipe with id %s | err: %s", c.Param("recipe_id"), err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+		return
+	}
+
+	if err := os.Remove(recipe.ImageURL); err != nil {
+		fmt.Errorf("error: Could not remove the current recipe with id %s | err: %s", c.Param("recipe_id"), err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+		return
+	}
+
+	file, err := c.FormFile("file")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No file received"})
+		return
+	}
+
+	imageName := c.PostForm("name") // this is from the "name" field
+	if imageName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing image name"})
+		return
+	}
+
+	// Ensure "images" folder exists
+	os.MkdirAll("images", os.ModePerm)
+
+	// Save file inside "images" directory
+	filename := uuid.New().String() + filepath.Ext(file.Filename)
+	savePath := fmt.Sprintf("images/%s", filename)
+	if err := c.SaveUploadedFile(file, savePath); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save file"})
+		return
+	}
+
+	// Return URL to access image later
+	imageURL := fmt.Sprintf("/images/%s", filename)
+
+	newRecipe := model.Recipe{
+		Name:     imageName,
+		ImageURL: imageURL,
+	}
+
+	if err := db.Table("recipes").Save(&newRecipe).Error; err != nil {
+		fmt.Errorf("error: UploadRecipeImage failed, could not save recipe to DB | err: %v", err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Upload successful",
+		"url":     imageURL,
+	})
+}

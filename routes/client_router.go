@@ -83,6 +83,7 @@ func UserRoutes(incomingRoutes *gin.Engine) {
 	incomingRoutes.GET("/admin/recipes", adminController.GetListOfRecipes)
 	incomingRoutes.POST("/admin/recipes/upload", adminController.UploadRecipeImage)
 	incomingRoutes.GET("/admin/recipes/:recipe_id", adminController.GetRecipeImageForAdmin)
+	incomingRoutes.POST("/admin/recipes/:recipe_id/update", adminController.UpdateRecipeImageByAdmin)
 
 	// ADMIN - EXERCISES
 	incomingRoutes.GET("/admin/exercises", adminController.GetListOfExercises)
