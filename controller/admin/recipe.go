@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/cd-Ishita/nutriediet-go/database"
 	"github.com/cd-Ishita/nutriediet-go/helpers"
@@ -312,6 +313,7 @@ func UpdateRecipeImageByAdmin(c *gin.Context) {
 	imageURL := fmt.Sprintf("/images/%s", filename)
 
 	newRecipe := model.Recipe{
+		ID:       recipe.ID,
 		Name:     imageName,
 		ImageURL: imageURL,
 	}
@@ -325,5 +327,46 @@ func UpdateRecipeImageByAdmin(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Upload successful",
 		"url":     imageURL,
+	})
+}
+
+func DeleteRecipeImageByAdmin(c *gin.Context) {
+	if !helpers.CheckUserType(c, "ADMIN") {
+		fmt.Errorf("error: client user not allowed to access")
+		c.JSON(http.StatusUnauthorized, gin.H{"err": "unauthorized access by client"})
+		return
+	}
+
+	db := database.DB
+
+	var recipe model.Recipe
+	err := db.Table("recipes").Where("id = ? AND deleted_at IS NULL", c.Param("recipe_id")).First(&recipe).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		fmt.Errorf("error: UpdateRecipeImageByAdmin recipe with id %s does not exist", c.Param("recipe_id"))
+		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+		return
+	} else if err != nil {
+		fmt.Errorf("error: UpdateRecipeImageByAdmin could not find the recipe with id %s | err: %s", c.Param("recipe_id"), err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+		return
+	}
+
+	if err := os.Remove(recipe.ImageURL); err != nil {
+		fmt.Errorf("error: Could not remove the current recipe with id %s | err: %s", c.Param("recipe_id"), err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+		return
+	}
+
+	timeNow := time.Now()
+	recipe.DeletedAt = &timeNow
+
+	if err := db.Table("recipes").Save(&recipe).Error; err != nil {
+		fmt.Errorf("error: UploadRecipeImage failed, could not save recipe to DB | err: %v", err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Delete successful",
 	})
 }
