@@ -154,10 +154,24 @@ func migrateClientInfoForAdmin(updatedInfo model.Client, existingInfo model.Clie
 		}
 		existingInfo.AmountDue = existingInfo.TotalAmount - existingInfo.AmountPaid
 
+		// Update lastPaymentDate if provided
 		if updatedInfo.LastPaymentDate != nil {
 			existingInfo.LastPaymentDate = updatedInfo.LastPaymentDate
-			nextPaymentDate := existingInfo.LastPaymentDate.AddDate(0, 0, constants.PackageDayMap[existingInfo.Package])
-			existingInfo.NextPaymentDate = &nextPaymentDate
+			// Only calculate the next payment date if not explicitly provided
+			if updatedInfo.NextPaymentDate == nil && existingInfo.Package != "" {
+				nextPaymentDate := existingInfo.LastPaymentDate.AddDate(0, 0, constants.PackageDayMap[existingInfo.Package])
+				existingInfo.NextPaymentDate = &nextPaymentDate
+			}
+		}
+
+		// Update nextPaymentDate if explicitly provided
+		if updatedInfo.NextPaymentDate != nil {
+			existingInfo.NextPaymentDate = updatedInfo.NextPaymentDate
+		}
+
+		// Update DateOfJoining if provided
+		if updatedInfo.DateOfJoining != nil {
+			existingInfo.DateOfJoining = updatedInfo.DateOfJoining
 		}
 	}
 
