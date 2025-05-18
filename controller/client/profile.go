@@ -3,13 +3,14 @@ package client
 import (
 	"errors"
 	"fmt"
+	"net/http"
+	"time"
+
 	"github.com/cd-Ishita/nutriediet-go/database"
 	"github.com/cd-Ishita/nutriediet-go/middleware"
 	"github.com/cd-Ishita/nutriediet-go/model"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
-	"net/http"
-	"time"
 )
 
 // this method is triggered by the client
@@ -243,13 +244,14 @@ func HasClientCreatedProfile(c *gin.Context) {
 	db := database.DB
 
 	client := model.Client{}
-	err := db.Where("id = ?", c.Param("client_id")).First(client).Error
-	if errors.Is(gorm.ErrRecordNotFound, err) {
+	err := db.Where("id = ? AND deleted_at IS NULL", c.Param("client_id")).First(&client).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
 		c.JSON(http.StatusOK, gin.H{"profile_created": false, "is_active": false})
 		return
 	} else if err != nil {
-		fmt.Errorf("error: could not fetch client's profile information in database client_id: %s | err: %v", c.Param("client_id"), err)
+		fmt.Println("error: could not fetch client's profile information in database client_id:", c.Param("client_id"), "| err:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"profile_created": true, "is_active": client.IsActive})
