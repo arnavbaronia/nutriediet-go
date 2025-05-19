@@ -2,10 +2,10 @@ package admin
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/cd-Ishita/nutriediet-go/database"
@@ -159,214 +159,219 @@ import (
 
 func GetListOfRecipes(c *gin.Context) {
 	if !helpers.CheckUserType(c, "ADMIN") {
-		fmt.Errorf("error: client user not allowed to access")
-		c.JSON(http.StatusUnauthorized, gin.H{"err": "unauthorized access by client"})
-		return
-	}
-	db := database.DB
-	var recipes []model.Recipe
-	if err := db.Where("deleted_at IS NULL").Find(&recipes).Error; err != nil {
-		fmt.Errorf("error: GetListOfRecipes | could not find recipes: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized access by client"})
 		return
 	}
 
-	res := []model.GetListOfRecipesResponse{}
-	for _, recipe := range recipes {
-		res = append(res, model.GetListOfRecipesResponse{
+	db := database.DB
+	var recipes []model.Recipe
+	if err := db.Where("deleted_at IS NULL").Find(&recipes).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not fetch recipes"})
+		return
+	}
+
+	res := make([]model.GetListOfRecipesResponse, len(recipes))
+	for i, recipe := range recipes {
+		res[i] = model.GetListOfRecipesResponse{
 			Name:     recipe.Name,
 			RecipeID: recipe.ID,
-		})
+		}
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "list": res})
-	return
 }
 
 func UploadRecipeImage(c *gin.Context) {
 	if !helpers.CheckUserType(c, "ADMIN") {
-		fmt.Errorf("error: client user not allowed to access")
-		c.JSON(http.StatusUnauthorized, gin.H{"err": "unauthorized access by client"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized access by client"})
 		return
 	}
 
 	file, err := c.FormFile("file")
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "No file received"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "no file received"})
 		return
 	}
 
-	imageName := c.PostForm("name") // this is from the "name" field
+	imageName := strings.TrimSpace(c.PostForm("name"))
 	if imageName == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing image name"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "missing or empty image name"})
 		return
 	}
 
 	// Ensure "images" folder exists
-	os.MkdirAll("images", os.ModePerm)
-
-	// Save file inside "images" directory
-	filename := uuid.New().String() + filepath.Ext(file.Filename)
-	savePath := fmt.Sprintf("images/%s", filename)
-	if err := c.SaveUploadedFile(file, savePath); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save file"})
+	if err := os.MkdirAll("images", os.ModePerm); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create images directory"})
 		return
 	}
 
-	// Return URL to access image later
-	imageURL := fmt.Sprintf("/images/%s", filename)
+	// Generate unique filename
+	ext := filepath.Ext(file.Filename)
+	filename := uuid.New().String() + ext
+	savePath := filepath.Join("images", filename)
 
+	// Save file
+	if err := c.SaveUploadedFile(file, savePath); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save file"})
+		return
+	}
+
+	// Create recipe record
 	recipe := model.Recipe{
 		Name:     imageName,
-		ImageURL: imageURL,
+		ImageURL: "/" + savePath, // Ensure consistent path format
 	}
 
 	db := database.DB
-
-	if err := db.Table("recipes").Save(&recipe).Error; err != nil {
-		fmt.Errorf("error: UploadRecipeImage failed, could not save recipe to DB | err: %v", err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+	if err := db.Create(&recipe).Error; err != nil {
+		// Clean up the saved file if DB operation fails
+		os.Remove(savePath)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save recipe to database"})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Upload successful",
-		"url":     imageURL,
+		"success": true,
+		"message": "upload successful",
+		"url":     recipe.ImageURL,
+		"recipe":  recipe,
 	})
 }
 
 func GetRecipeImageForAdmin(c *gin.Context) {
 	if !helpers.CheckUserType(c, "ADMIN") {
-		fmt.Errorf("error: client user not allowed to access")
-		c.JSON(http.StatusUnauthorized, gin.H{"err": "unauthorized access by client"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized access by client"})
+		return
+	}
+
+	recipeID := c.Param("recipe_id")
+	if recipeID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "missing recipe id"})
 		return
 	}
 
 	db := database.DB
-
 	var recipe model.Recipe
-	err := db.Table("recipes").Where("id = ? and deleted_at IS NULL", c.Param("recipe_id")).First(&recipe).Error
-	if errors.Is(gorm.ErrRecordNotFound, err) {
-		fmt.Errorf("error: GetRecipeImageForAdmin recipe with id %s does not exist", c.Param("recipe_id"))
-		c.JSON(http.StatusInternalServerError, gin.H{"err": "no recipe found"})
-		return
-	} else if err != nil {
-		fmt.Errorf("error: GetRecipeImageForAdmin could not fetch recipe with id %s | err: %v", c.Param("recipe_id"), err)
-		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
-		return
-	}
 
-	c.JSON(http.StatusOK, gin.H{"recipe": recipe})
-	return
-}
-
-func UpdateRecipeImageByAdmin(c *gin.Context) {
-	if !helpers.CheckUserType(c, "ADMIN") {
-		fmt.Errorf("error: client user not allowed to access")
-		c.JSON(http.StatusUnauthorized, gin.H{"err": "unauthorized access by client"})
-		return
-	}
-
-	db := database.DB
-
-	var recipe model.Recipe
-	err := db.Table("recipes").Where("id = ? AND deleted_at IS NULL", c.Param("recipe_id")).First(&recipe).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		fmt.Errorf("error: UpdateRecipeImageByAdmin recipe with id %s does not exist", c.Param("recipe_id"))
-		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
-		return
-	} else if err != nil {
-		fmt.Errorf("error: UpdateRecipeImageByAdmin could not find the recipe with id %s | err: %s", c.Param("recipe_id"), err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
-		return
-	}
-
-	if err := os.Remove(recipe.ImageURL); err != nil {
-		fmt.Errorf("error: Could not remove the current recipe with id %s | err: %s", c.Param("recipe_id"), err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
-		return
-	}
-
-	file, err := c.FormFile("file")
+	err := db.Where("id = ? AND deleted_at IS NULL", recipeID).First(&recipe).Error
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "No file received"})
-		return
-	}
-
-	imageName := c.PostForm("name") // this is from the "name" field
-	if imageName == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing image name"})
-		return
-	}
-
-	// Ensure "images" folder exists
-	os.MkdirAll("images", os.ModePerm)
-
-	// Save file inside "images" directory
-	filename := uuid.New().String() + filepath.Ext(file.Filename)
-	savePath := fmt.Sprintf("images/%s", filename)
-	if err := c.SaveUploadedFile(file, savePath); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save file"})
-		return
-	}
-
-	// Return URL to access image later
-	imageURL := fmt.Sprintf("/images/%s", filename)
-
-	newRecipe := model.Recipe{
-		ID:       recipe.ID,
-		Name:     imageName,
-		ImageURL: imageURL,
-	}
-
-	if err := db.Table("recipes").Save(&newRecipe).Error; err != nil {
-		fmt.Errorf("error: UploadRecipeImage failed, could not save recipe to DB | err: %v", err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "recipe not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch recipe"})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Upload successful",
-		"url":     imageURL,
+		"success": true,
+		"recipe":  recipe,
+	})
+}
+
+func UpdateRecipeImageByAdmin(c *gin.Context) {
+	if !helpers.CheckUserType(c, "ADMIN") {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized access by client"})
+		return
+	}
+
+	recipeID := c.Param("recipe_id")
+	if recipeID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "missing recipe id"})
+		return
+	}
+
+	db := database.DB
+
+	// First find the existing recipe
+	var existingRecipe model.Recipe
+	if err := db.Where("id = ? AND deleted_at IS NULL", recipeID).First(&existingRecipe).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "recipe not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch recipe"})
+		return
+	}
+
+	// Process the file if provided
+	file, _ := c.FormFile("file")
+	imageName := strings.TrimSpace(c.PostForm("name"))
+
+	if file != nil {
+		// Remove old file if it exists
+		if existingRecipe.ImageURL != "" {
+			oldPath := strings.TrimPrefix(existingRecipe.ImageURL, "/")
+			if err := os.Remove(oldPath); err != nil && !os.IsNotExist(err) {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to remove old image"})
+				return
+			}
+		}
+
+		// Save new file
+		ext := filepath.Ext(file.Filename)
+		filename := uuid.New().String() + ext
+		savePath := filepath.Join("images", filename)
+
+		if err := c.SaveUploadedFile(file, savePath); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save new file"})
+			return
+		}
+		existingRecipe.ImageURL = "/" + savePath
+	}
+
+	if imageName != "" {
+		existingRecipe.Name = imageName
+	}
+
+	// Update the recipe
+	if err := db.Save(&existingRecipe).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update recipe"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "update successful",
+		"recipe":  existingRecipe,
 	})
 }
 
 func DeleteRecipeImageByAdmin(c *gin.Context) {
 	if !helpers.CheckUserType(c, "ADMIN") {
-		fmt.Errorf("error: client user not allowed to access")
-		c.JSON(http.StatusUnauthorized, gin.H{"err": "unauthorized access by client"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized access by client"})
+		return
+	}
+
+	recipeID := c.Param("recipe_id")
+	if recipeID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "missing recipe id"})
 		return
 	}
 
 	db := database.DB
 
+	// First find the existing recipe
 	var recipe model.Recipe
-	err := db.Table("recipes").Where("id = ? AND deleted_at IS NULL", c.Param("recipe_id")).First(&recipe).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		fmt.Errorf("error: UpdateRecipeImageByAdmin recipe with id %s does not exist", c.Param("recipe_id"))
-		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
-		return
-	} else if err != nil {
-		fmt.Errorf("error: UpdateRecipeImageByAdmin could not find the recipe with id %s | err: %s", c.Param("recipe_id"), err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+	if err := db.Where("id = ? AND deleted_at IS NULL", recipeID).First(&recipe).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "recipe not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch recipe"})
 		return
 	}
 
-	if err := os.Remove(recipe.ImageURL); err != nil {
-		fmt.Errorf("error: Could not remove the current recipe with id %s | err: %s", c.Param("recipe_id"), err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
-		return
-	}
+	// Soft delete by setting DeletedAt
+	now := time.Now()
+	recipe.DeletedAt = &now
 
-	timeNow := time.Now()
-	recipe.DeletedAt = &timeNow
-
-	if err := db.Table("recipes").Save(&recipe).Error; err != nil {
-		fmt.Errorf("error: UploadRecipeImage failed, could not save recipe to DB | err: %v", err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+	if err := db.Save(&recipe).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete recipe"})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Delete successful",
+		"success": true,
+		"message": "recipe deleted successfully",
 	})
 }
