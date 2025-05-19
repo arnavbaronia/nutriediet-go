@@ -2,13 +2,13 @@ package client
 
 import (
 	"errors"
-	"fmt"
+	"net/http"
+
 	"github.com/cd-Ishita/nutriediet-go/database"
 	"github.com/cd-Ishita/nutriediet-go/middleware"
 	"github.com/cd-Ishita/nutriediet-go/model"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
-	"net/http"
 )
 
 //func GetRecipesForClient(c *gin.Context) {
@@ -59,9 +59,18 @@ import (
 
 func GetRecipeImageForClients(c *gin.Context) {
 	clientEmail := c.GetString("email")
-	isAllowed, isActive := middleware.ClientAuthentication(clientEmail, c.Param("client_id"))
+	clientID := c.Param("client_id")
+
+	// Authentication check
+	isAllowed, isActive := middleware.ClientAuthentication(clientEmail, clientID)
 	if !isAllowed {
-		c.JSON(http.StatusUnauthorized, gin.H{"clientEmail": c.Param("email"), "requestClientID": c.Param("client_id")})
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "unauthorized access",
+			"details": gin.H{
+				"clientEmail":     clientEmail,
+				"requestClientID": clientID,
+			},
+		})
 		return
 	}
 
@@ -71,19 +80,34 @@ func GetRecipeImageForClients(c *gin.Context) {
 	}
 
 	db := database.DB
-
 	var recipes []model.Recipe
-	err := db.Table("recipes").Where("deleted_at IS NULL").Find(&recipes).Error
-	if errors.Is(gorm.ErrRecordNotFound, err) {
-		fmt.Errorf("error: GetRecipeImageForClients recipesdo not exist")
-		c.JSON(http.StatusInternalServerError, gin.H{"err": "no recipe found"})
-		return
-	} else if err != nil {
-		fmt.Errorf("error: GetRecipeImageForClients could not fetch recipes | err: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
+
+	// Fetch only non-deleted recipes with their image URLs
+	err := db.Select("id, name, image_url").Where("deleted_at IS NULL").Find(&recipes).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusOK, gin.H{"recipes": []interface{}{}})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "failed to fetch recipes",
+			"details": err.Error(),
+		})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"recipe": recipes})
-	return
+	// Return simplified response with just the essential data
+	response := make([]gin.H, len(recipes))
+	for i, recipe := range recipes {
+		response[i] = gin.H{
+			"id":       recipe.ID,
+			"name":     recipe.Name,
+			"imageUrl": recipe.ImageURL,
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"isActive": true,
+		"recipes":  response,
+	})
 }
