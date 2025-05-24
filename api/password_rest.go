@@ -30,7 +30,7 @@ func InitiatePasswordReset(c *gin.Context) {
 	result := database.DB.Where("email = ?", input.Email).First(&user)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			c.JSON(http.StatusOK, gin.H{"message": "If the email exists, a reset OTP has been sent"})
+			c.JSON(http.StatusOK, gin.H{"message": "Password reset instructions sent if the email is registered"})
 			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
@@ -62,7 +62,7 @@ func InitiatePasswordReset(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "If the email exists, a reset OTP has been sent"})
+	c.JSON(http.StatusOK, gin.H{"message": "Password reset OTP has been sent"})
 }
 
 func CompletePasswordReset(c *gin.Context) {
