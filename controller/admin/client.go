@@ -127,7 +127,13 @@ func UpdateClientInfo(c *gin.Context) {
 	}
 
 	isSuperAdmin := c.GetString("email") == constants.SuperAdminEmail
-	upsertedClient := migrateClientInfoForAdmin(req, client, isSuperAdmin)
+	upsertedClient, err := migrateClientInfoForAdmin(req, client, isSuperAdmin)
+	if err != nil {
+		fmt.Errorf("error: failed to migrate client info | %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
 	err = db.Save(&upsertedClient).Error
 	if err != nil {
 		fmt.Errorf("error: could not save client information | client_info: %v | err: %v", upsertedClient, err)
@@ -139,13 +145,18 @@ func UpdateClientInfo(c *gin.Context) {
 	return
 }
 
-func migrateClientInfoForAdmin(updatedInfo model.Client, existingInfo model.Client, isSuperAdmin bool) model.Client {
+func migrateClientInfoForAdmin(updatedInfo model.Client, existingInfo model.Client, isSuperAdmin bool) (model.Client, error) {
 	// TODO: do we want admin to be able to update the starting weight in cases where client comes back
 
 	if isSuperAdmin {
 		if _, exists := constants.PackageDayMap[updatedInfo.Package]; exists && updatedInfo.Package != "" {
 			existingInfo.Package = updatedInfo.Package
 		}
+		// Add validation for empty package
+		if updatedInfo.Package == "" {
+			return model.Client{}, errors.New("package cannot be empty")
+		}
+
 		if updatedInfo.TotalAmount != 0 {
 			existingInfo.TotalAmount = updatedInfo.TotalAmount
 		}
@@ -227,7 +238,7 @@ func migrateClientInfoForAdmin(updatedInfo model.Client, existingInfo model.Clie
 		existingInfo.Locality = updatedInfo.Locality
 	}
 
-	return existingInfo
+	return existingInfo, nil
 }
 
 // deactivation of client account handled by a separate API
