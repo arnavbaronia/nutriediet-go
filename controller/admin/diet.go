@@ -3,15 +3,16 @@ package admin
 import (
 	"errors"
 	"fmt"
+	"net/http"
+	"strconv"
+	"time"
+
 	"github.com/cd-Ishita/nutriediet-go/constants"
 	"github.com/cd-Ishita/nutriediet-go/database"
 	"github.com/cd-Ishita/nutriediet-go/helpers"
 	"github.com/cd-Ishita/nutriediet-go/model"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
-	"net/http"
-	"strconv"
-	"time"
 )
 
 func GetDietHistoryForClient(c *gin.Context) {
@@ -226,8 +227,12 @@ func UpdateWeightForClientByAdmin(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{})
-	return
+
+	// Return success message
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Weight updated successfully",
+		"success": true,
+	})
 }
 
 func DeleteDietForClientByAdmin(c *gin.Context) {
