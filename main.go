@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"time"
 
@@ -10,9 +11,19 @@ import (
 	"github.com/cd-Ishita/nutriediet-go/routes"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	// Load environment variables from .env file
+	err := godotenv.Load()
+	if err != nil {
+		// Don't fail if .env file doesn't exist (useful for production)
+		log.Println("Warning: .env file not found, using system environment variables")
+	} else {
+		log.Println("✅ Environment variables loaded from .env file")
+	}
+
 	database.ConnectToDB()
 
 	port := os.Getenv("PORT")

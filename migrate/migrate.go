@@ -19,6 +19,9 @@ func main() {
 	//database.DB.AutoMigrate(&model.Notification{})
 	//database.DB.AutoMigrate(&model.Payment{})
 	database.DB.AutoMigrate(&model.Recipe{})
+	
+	// Migrate password OTP table for forgot password functionality
+	database.DB.AutoMigrate(&model.PasswordOTP{})
 	//dummyData1()
 }
 

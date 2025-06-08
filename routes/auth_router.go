@@ -12,4 +12,8 @@ func AuthRoutes(incomingRoutes *gin.Engine) {
 	incomingRoutes.POST("signup", userController.SignUp)
 	incomingRoutes.POST("login", userController.Login)
 	incomingRoutes.POST("/create_profile/:email", clientController.CreateProfileByClient)
+	
+	// Password reset routes
+	incomingRoutes.POST("/auth/forgot-password", userController.ForgotPassword)
+	incomingRoutes.POST("/auth/reset-password", userController.ResetPassword)
 }
