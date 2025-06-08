@@ -4,8 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
-	"time"
+
+	// "strconv"
+	// "time"
 
 	"github.com/cd-Ishita/nutriediet-go/constants"
 	"github.com/cd-Ishita/nutriediet-go/database"
@@ -65,7 +66,6 @@ func UpdateWeightForClientByAdmin(c *gin.Context) {
 	}
 
 	db := database.DB
-	
 
 	var req model.WeightUpdateRequest
 	if err := c.BindJSON(&req); err != nil {
