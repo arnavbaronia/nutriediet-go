@@ -10,15 +10,9 @@ import (
 	"github.com/cd-Ishita/nutriediet-go/routes"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 )
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		panic("Error loading .env file")
-	}
-
 	database.ConnectToDB()
 
 	port := os.Getenv("PORT")
