@@ -9,5 +9,6 @@ type GetWeightHistoryForClientResponse struct {
 
 type WeightUpdateRequest struct {
 	Weight   float32 `json:"weight"`
+	WeekNumber int32   `json:"week_number"`
 	Feedback string  `json:"feedback"`
 }
