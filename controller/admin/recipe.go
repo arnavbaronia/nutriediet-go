@@ -166,10 +166,7 @@ func GetListOfRecipes(c *gin.Context) {
 	db := database.DB
 	var recipes []model.Recipe
 	if err := db.Where("deleted_at IS NULL").Find(&recipes).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "could not fetch recipes",
-			"details": err.Error(),
-		})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not fetch recipes"})
 		return
 	}
 

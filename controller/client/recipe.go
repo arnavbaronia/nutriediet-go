@@ -2,7 +2,6 @@ package client
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/cd-Ishita/nutriediet-go/database"
@@ -87,11 +86,9 @@ func GetRecipeImageForClients(c *gin.Context) {
 	err := db.Select("id, name, image_url").Where("deleted_at IS NULL").Find(&recipes).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			fmt.Printf("[INFO] No recipes found for client %s (ID: %s)\n", clientEmail, clientID)
 			c.JSON(http.StatusOK, gin.H{"recipes": []interface{}{}})
 			return
 		}
-		fmt.Printf("[ERROR] Failed to fetch recipes for client %s (ID: %s): %v\n", clientEmail, clientID, err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "failed to fetch recipes",
 			"details": err.Error(),
