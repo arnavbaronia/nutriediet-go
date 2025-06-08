@@ -29,18 +29,18 @@ type ResetPasswordRequest struct {
 // ForgotPassword handles the forgot password request
 func ForgotPassword(c *gin.Context) {
 	var req ForgotPasswordRequest
-	
+
 	// Bind and validate request
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid request format",
+			"error":   "Invalid request format",
 			"details": err.Error(),
 		})
 		return
 	}
-	
+
 	db := database.DB
-	
+
 	// Check if user exists
 	var user model.UserAuth
 	err := db.Where("email = ?", req.Email).First(&user).Error
@@ -56,7 +56,7 @@ func ForgotPassword(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	// Generate OTP
 	otp, err := helpers.GenerateOTP()
 	if err != nil {
@@ -66,7 +66,7 @@ func ForgotPassword(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	// Hash OTP
 	otpHash, err := bcrypt.GenerateFromPassword([]byte(otp), bcrypt.DefaultCost)
 	if err != nil {
@@ -76,27 +76,29 @@ func ForgotPassword(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	// Set expiry time (5 minutes from now)
 	expiresAt := time.Now().Add(5 * time.Minute)
-	
-	// Store OTP in database (UPSERT operation)
+
+	// Store OTP in database using FirstOrCreate with Assign
 	passwordOTP := model.PasswordOTP{
 		Email:     req.Email,
 		OtpHash:   string(otpHash),
 		ExpiresAt: expiresAt,
 	}
-	
-	// Use GORM's Save method which performs UPSERT
-	err = db.Save(&passwordOTP).Error
-	if err != nil {
-		fmt.Printf("Error saving OTP to database: %v\n", err)
+
+	result := db.Where(model.PasswordOTP{Email: req.Email}).
+		Assign(model.PasswordOTP{OtpHash: string(otpHash), ExpiresAt: expiresAt}).
+		FirstOrCreate(&passwordOTP)
+
+	if result.Error != nil {
+		fmt.Printf("Error saving OTP to database: %v\n", result.Error)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to store OTP",
 		})
 		return
 	}
-	
+
 	// Send OTP via email
 	err = helpers.SendOTPEmail(req.Email, otp)
 	if err != nil {
@@ -106,28 +108,28 @@ func ForgotPassword(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	c.JSON(http.StatusOK, gin.H{
 		"message": "OTP sent successfully to your email address",
-		"email": req.Email,
+		"email":   req.Email,
 	})
 }
 
 // ResetPassword handles the password reset with OTP verification
 func ResetPassword(c *gin.Context) {
 	var req ResetPasswordRequest
-	
+
 	// Bind and validate request
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid request format",
+			"error":   "Invalid request format",
 			"details": err.Error(),
 		})
 		return
 	}
-	
+
 	db := database.DB
-	
+
 	// Check if user exists
 	var user model.UserAuth
 	err := db.Where("email = ?", req.Email).First(&user).Error
@@ -143,7 +145,7 @@ func ResetPassword(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	// Get OTP record
 	var passwordOTP model.PasswordOTP
 	err = db.Where("email = ?", req.Email).First(&passwordOTP).Error
@@ -159,7 +161,7 @@ func ResetPassword(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	// Check if OTP has expired
 	if time.Now().After(passwordOTP.ExpiresAt) {
 		// Clean up expired OTP
@@ -169,7 +171,7 @@ func ResetPassword(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	// Verify OTP
 	err = bcrypt.CompareHashAndPassword([]byte(passwordOTP.OtpHash), []byte(req.OTP))
 	if err != nil {
@@ -178,7 +180,7 @@ func ResetPassword(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	// Hash new password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
 	if err != nil {
@@ -188,7 +190,7 @@ func ResetPassword(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	// Update user password
 	err = db.Model(&user).Update("password", string(hashedPassword)).Error
 	if err != nil {
@@ -198,12 +200,12 @@ func ResetPassword(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	// Clean up used OTP
 	db.Delete(&passwordOTP)
-	
+
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Password reset successfully",
-		"email": req.Email,
+		"email":   req.Email,
 	})
-} 
+}
