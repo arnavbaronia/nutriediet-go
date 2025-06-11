@@ -15,10 +15,12 @@ func main() {
 	//database.DB.AutoMigrate(&model.DietTemplate{})
 	//database.DB.AutoMigrate(&model.Client{})
 	//database.DB.AutoMigrate(&model.Exercise{})
+	database.DB.Migrator().DropTable(&model.FavoriteExercise{})
+	database.DB.AutoMigrate(&model.FavoriteExercise{})
 	//database.DB.AutoMigrate(&model.UserAuth{})
 	//database.DB.AutoMigrate(&model.Notification{})
 	//database.DB.AutoMigrate(&model.Payment{})
-	database.DB.AutoMigrate(&model.Recipe{})
+	// database.DB.AutoMigrate(&model.Recipe{})
 
 	// Migrate password OTP table for forgot password functionality
 	//database.DB.AutoMigrate(&model.PasswordOTP{})

@@ -29,6 +29,7 @@ func UserRoutes(incomingRoutes *gin.Engine) {
 
 	// CLIENT - EXERCISE
 	incomingRoutes.GET("/clients/:client_id/exercise", clientController.GetExercisesForClient)
+	incomingRoutes.POST("/clients/:client_id/exercise/favorite", clientController.ToggleFavoriteExercise)
 
 	// CLIENT - PROFILE
 	incomingRoutes.POST("/clients/:client_id/my_profile", clientController.UpdateProfileByClient)

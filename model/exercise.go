@@ -24,3 +24,9 @@ type GetListOfExercisesResponse struct {
 	Name string
 	ID   uint
 }
+
+type FavoriteExercise struct {
+	ClientID   string     `gorm:"primaryKey"`
+	ExerciseID uint       `gorm:"primaryKey"`
+	CreatedAt  *time.Time `gorm:"column:created_at;type:datetime not null;default:CURRENT_TIMESTAMP;"`
+}
