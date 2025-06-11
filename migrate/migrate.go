@@ -2,7 +2,6 @@ package main
 
 import (
 	database "github.com/cd-Ishita/nutriediet-go/database"
-	"github.com/cd-Ishita/nutriediet-go/model"
 )
 
 func init() {
@@ -11,12 +10,13 @@ func init() {
 
 func main() {
 	//database.DB.AutoMigrate(&model.Client{})
-	//database.DB.AutoMigrate(&model.DietHistory{})
+	// database.DB.AutoMigrate(&model.DietHistory{})
+	// database.DB.Migrator().DropColumn(&model.DietHistory{}, "saved_date")
 	//database.DB.AutoMigrate(&model.DietTemplate{})
 	//database.DB.AutoMigrate(&model.Client{})
 	//database.DB.AutoMigrate(&model.Exercise{})
-	database.DB.Migrator().DropTable(&model.FavoriteExercise{})
-	database.DB.AutoMigrate(&model.FavoriteExercise{})
+	// database.DB.Migrator().DropTable(&model.FavoriteExercise{})
+	// database.DB.AutoMigrate(&model.FavoriteExercise{})
 	//database.DB.AutoMigrate(&model.UserAuth{})
 	//database.DB.AutoMigrate(&model.Notification{})
 	//database.DB.AutoMigrate(&model.Payment{})

@@ -1,12 +1,12 @@
 package client
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
+	"net/http"
+
 	"github.com/cd-Ishita/nutriediet-go/constants"
 	"gorm.io/gorm"
-	"net/http"
 
 	"github.com/cd-Ishita/nutriediet-go/database"
 	"github.com/cd-Ishita/nutriediet-go/middleware"
@@ -60,22 +60,26 @@ func GetDietsForClient(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"regular_diet": regularDiet, "detox_diet": detoxDiet, "detox_water": detoxWater})
+	c.JSON(http.StatusOK, gin.H{
+		"regular_diet": regularDiet,
+		"detox_diet":   detoxDiet,
+		"detox_water":  detoxWater,
+	})
 	return
 }
 
-func getDietForClient(clientId *string, group_id *int, dietType uint32) (*string, error) {
-	// Assuming you have a DB instance initialized elsewhere
+func getDietForClient(clientId *string, group_id *int, dietType uint32) (*model.DietHistoryResponse, error) {
 	db := database.DB
 
-	// Retrieve the latest diet history record for the client
-	var diet sql.NullString
+	var dietHistory model.DietHistoryResponse
 	if dietType == constants.RegularDiet.Uint32() && clientId != nil {
 		err := db.Model(&model.DietHistory{}).
-			Where("client_id = ? and diet_type = ? and deleted_at IS NULL", *clientId, dietType).
+			Joins("left outer join diet_templates on diet_template_id = diet_templates.id").
+			Select("diet_histories.*, diet_templates.name as diet_template_name").
+			Where("client_id = ? and diet_type = ? and diet_histories.deleted_at IS NULL", *clientId, dietType).
 			Order("date DESC, created_at DESC").
 			Limit(1).
-			Pluck("diet_string", &diet).
+			First(&dietHistory).
 			Error
 		if err != nil {
 			fmt.Errorf("err: %v", err)
@@ -83,10 +87,12 @@ func getDietForClient(clientId *string, group_id *int, dietType uint32) (*string
 		}
 	} else if (dietType == constants.DetoxDiet.Uint32() || dietType == constants.DetoxWater.Uint32()) && group_id != nil {
 		err := db.Model(&model.DietHistory{}).
-			Where("group_id = ? and diet_type = ? and deleted_at IS NULL", *group_id, dietType).
+			Joins("left outer join diet_templates on diet_template_id = diet_templates.id").
+			Select("diet_histories.*, diet_templates.name as diet_template_name").
+			Where("group_id = ? and diet_type = ? and diet_histories.deleted_at IS NULL", *group_id, dietType).
 			Order("date DESC, created_at DESC").
 			Limit(1).
-			Pluck("diet_string", &diet).
+			First(&dietHistory).
 			Error
 		if err != nil {
 			fmt.Errorf("err: %v", err)
@@ -94,9 +100,9 @@ func getDietForClient(clientId *string, group_id *int, dietType uint32) (*string
 		}
 	}
 
-	if !diet.Valid {
+	if dietHistory.DietString == nil {
 		fmt.Errorf("found invalid diet for client %s or group %d of diet_type %d", clientId, group_id, dietType)
 		return nil, nil
 	}
-	return &diet.String, nil
+	return &dietHistory, nil
 }
