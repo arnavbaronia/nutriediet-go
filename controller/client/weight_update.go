@@ -3,10 +3,11 @@ package client
 import (
 	"errors"
 	"fmt"
-	"github.com/cd-Ishita/nutriediet-go/constants"
-	"github.com/cd-Ishita/nutriediet-go/middleware"
 	"net/http"
 	"time"
+
+	"github.com/cd-Ishita/nutriediet-go/constants"
+	"github.com/cd-Ishita/nutriediet-go/middleware"
 
 	"github.com/cd-Ishita/nutriediet-go/database"
 	"github.com/cd-Ishita/nutriediet-go/model"
@@ -127,6 +128,37 @@ func IsWeightUpdationAllowed(clientId string) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func GetWeightHistoryForClient(c *gin.Context) {
+	db := database.DB
+
+	clientEmail := c.GetString("email")
+	isAllowed, _ := middleware.ClientAuthentication(clientEmail, c.Param("client_id"))
+	if !isAllowed {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized access"})
+		return
+	}
+
+	var weightHistory []struct {
+		Date   time.Time `json:"date"`
+		Weight float32   `json:"weight"`
+	}
+
+	err := db.Model(&model.DietHistory{}).
+		Where("client_id = ? and weight IS NOT NULL and deleted_at IS NULL", c.Param("client_id")).
+		Order("date ASC").
+		Select("date, weight").
+		Find(&weightHistory).
+		Error
+
+	if err != nil {
+		fmt.Errorf("error: GetWeightHistoryForClient | could not fetch weight history for client %s | err: %v", c.Param("client_id"), err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"weight_history": weightHistory})
 }
 
 // logic behind weight updation and diet submit

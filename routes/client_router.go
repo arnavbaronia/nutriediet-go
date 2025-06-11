@@ -23,6 +23,7 @@ func UserRoutes(incomingRoutes *gin.Engine) {
 	// CLIENT - WEIGHT UPDATE
 	incomingRoutes.POST("/clients/:client_id/weight_update", clientController.UpdateWeightForClient)
 	incomingRoutes.GET("/clients/:client_id/weight_update", clientController.WeightUpdationStatus)
+	incomingRoutes.GET("/clients/:client_id/weight-history", clientController.GetWeightHistoryForClient)
 
 	// CLIENT - DIET
 	incomingRoutes.GET("/clients/:client_id/diet", clientController.GetDietsForClient)
