@@ -2,9 +2,8 @@ package admin
 
 import (
 	"errors"
+	"io"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -12,7 +11,6 @@ import (
 	"github.com/cd-Ishita/nutriediet-go/helpers"
 	"github.com/cd-Ishita/nutriediet-go/model"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -198,33 +196,36 @@ func UploadRecipeImage(c *gin.Context) {
 		return
 	}
 
-	// Ensure "images" folder exists
-	if err := os.MkdirAll("images", os.ModePerm); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create images directory"})
+	// Open the file
+	src, err := file.Open()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to open file"})
+		return
+	}
+	defer src.Close()
+
+	// Read the file content
+	imageData, err := io.ReadAll(src)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to read file"})
 		return
 	}
 
-	// Generate unique filename
-	ext := filepath.Ext(file.Filename)
-	filename := uuid.New().String() + ext
-	savePath := filepath.Join("images", filename)
-
-	// Save file
-	if err := c.SaveUploadedFile(file, savePath); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save file"})
-		return
+	// Get content type
+	contentType := file.Header.Get("Content-Type")
+	if contentType == "" {
+		contentType = "application/octet-stream" // default if not specified
 	}
 
 	// Create recipe record
 	recipe := model.Recipe{
-		Name:     imageName,
-		ImageURL: "/" + savePath, // Ensure consistent path format
+		Name:      imageName,
+		ImageData: imageData,
+		ImageType: contentType,
 	}
 
 	db := database.DB
 	if err := db.Create(&recipe).Error; err != nil {
-		// Clean up the saved file if DB operation fails
-		os.Remove(savePath)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save recipe to database"})
 		return
 	}
@@ -232,7 +233,6 @@ func UploadRecipeImage(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "upload successful",
-		"url":     recipe.ImageURL,
 		"recipe":  recipe,
 	})
 }
@@ -262,10 +262,22 @@ func GetRecipeImageForAdmin(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"recipe":  recipe,
-	})
+	// Check Accept header to determine response type
+	acceptHeader := c.GetHeader("Accept")
+
+	if strings.Contains(acceptHeader, "application/json") {
+		// Return JSON response with recipe details
+		c.JSON(http.StatusOK, gin.H{
+			"success": true,
+			"recipe": gin.H{
+				"ID":   recipe.ID,
+				"Name": recipe.Name,
+			},
+		})
+	} else {
+		// Return image data
+		c.Data(http.StatusOK, recipe.ImageType, recipe.ImageData)
+	}
 }
 
 func UpdateRecipeImageByAdmin(c *gin.Context) {
@@ -298,25 +310,27 @@ func UpdateRecipeImageByAdmin(c *gin.Context) {
 	imageName := strings.TrimSpace(c.PostForm("name"))
 
 	if file != nil {
-		// Remove old file if it exists
-		if existingRecipe.ImageURL != "" {
-			oldPath := strings.TrimPrefix(existingRecipe.ImageURL, "/")
-			if err := os.Remove(oldPath); err != nil && !os.IsNotExist(err) {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to remove old image"})
-				return
-			}
-		}
-
-		// Save new file
-		ext := filepath.Ext(file.Filename)
-		filename := uuid.New().String() + ext
-		savePath := filepath.Join("images", filename)
-
-		if err := c.SaveUploadedFile(file, savePath); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save new file"})
+		// Open the file
+		src, err := file.Open()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to open file"})
 			return
 		}
-		existingRecipe.ImageURL = "/" + savePath
+		defer src.Close()
+
+		// Read the file content
+		imageData, err := io.ReadAll(src)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to read file"})
+			return
+		}
+
+		// Update image data and type
+		existingRecipe.ImageData = imageData
+		existingRecipe.ImageType = file.Header.Get("Content-Type")
+		if existingRecipe.ImageType == "" {
+			existingRecipe.ImageType = "application/octet-stream"
+		}
 	}
 
 	if imageName != "" {
