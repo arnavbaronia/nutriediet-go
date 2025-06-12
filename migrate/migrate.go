@@ -2,6 +2,7 @@ package main
 
 import (
 	database "github.com/cd-Ishita/nutriediet-go/database"
+	"github.com/cd-Ishita/nutriediet-go/model"
 )
 
 func init() {
@@ -21,6 +22,9 @@ func main() {
 	//database.DB.AutoMigrate(&model.Notification{})
 	//database.DB.AutoMigrate(&model.Payment{})
 	// database.DB.AutoMigrate(&model.Recipe{})
+	database.DB.Migrator().DropColumn(&model.Recipe{}, "image_data")
+	database.DB.Migrator().DropColumn(&model.Recipe{}, "image_type")
+	database.DB.AutoMigrate(&model.Recipe{})
 
 	// Migrate password OTP table for forgot password functionality
 	//database.DB.AutoMigrate(&model.PasswordOTP{})
