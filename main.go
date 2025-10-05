@@ -4,18 +4,20 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
-	"github.com/cd-Ishita/nutriediet-go/controller"
 	database "github.com/cd-Ishita/nutriediet-go/database"
+	"github.com/cd-Ishita/nutriediet-go/middleware"
 	"github.com/cd-Ishita/nutriediet-go/routes"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
 
-func main() {
-	// Load environment variables from .env file
+// init runs before main() and before any package init() functions
+func init() {
+	// Load environment variables FIRST, before any other package initialization
 	err := godotenv.Load()
 	if err != nil {
 		// Don't fail if .env file doesn't exist (useful for production)
@@ -23,6 +25,9 @@ func main() {
 	} else {
 		log.Println("✅ Environment variables loaded from .env file")
 	}
+}
+
+func main() {
 
 	database.ConnectToDB()
 
@@ -34,6 +39,10 @@ func main() {
 
 	router := gin.New()
 	router.Use(gin.Logger())
+	router.Use(gin.Recovery())
+	
+	// Security headers - protects against XSS, clickjacking, etc.
+	router.Use(middleware.SecurityHeaders())
 
 	// CORS configuration
 	config := cors.Config{
@@ -45,30 +54,23 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}
 	router.Use(cors.New(config))
+	
+	// Serve static images with no-cache headers (for development)
+	router.Use(func(c *gin.Context) {
+		if strings.HasPrefix(c.Request.URL.Path, "/images/") {
+			c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
+			c.Header("Pragma", "no-cache")
+			c.Header("Expires", "0")
+		}
+		c.Next()
+	})
 	router.Static("/images", "./images")
 
+	// Register routes
 	routes.AuthRoutes(router)
 	routes.UserRoutes(router)
 
-	router.GET("/api-1", func(c *gin.Context) {
-		c.JSON(200, gin.H{"success": "Access granted for api-1"})
-	})
-
-	router.GET("/api-2", func(c *gin.Context) {
-		c.JSON(200, gin.H{"success": "Access granted for api-2"})
-	})
-
-	router.POST("/create_user", controller.CreateUser)
-	router.GET("/get_users", controller.GetUsers)
-
-	// ADMIN - EXERCISE
-	router.GET("exercise", controller.GetExercisesForAdmin)
-	router.GET("exercise/:exercise_id", controller.GetExercise)
-	router.POST("exercise/:exercise_id/delete", controller.RemoveExerciseFromList)
-	router.POST("exercise/:exercise_id/update", controller.UpdateExerciseFromList)
-	router.POST("exercise/submit", controller.AddExerciseFromList)
-
-	// ADMIN - DIET
-
-	router.Run(":" + port) // listen and serve on 0.0.0.0:8081
+	// Start server
+	log.Printf("🚀 Server starting on port %s", port)
+	router.Run(":" + port)
 }

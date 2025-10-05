@@ -23,7 +23,7 @@ type ForgotPasswordRequest struct {
 type ResetPasswordRequest struct {
 	Email       string `json:"email" binding:"required,email"`
 	OTP         string `json:"otp" binding:"required,len=6"`
-	NewPassword string `json:"new_password" binding:"required,min=6"`
+	NewPassword string `json:"new_password" binding:"required,min=12"`
 }
 
 // ForgotPassword handles the forgot password request
@@ -80,15 +80,24 @@ func ForgotPassword(c *gin.Context) {
 	// Set expiry time (5 minutes from now)
 	expiresAt := time.Now().Add(5 * time.Minute)
 
-	// Store OTP in database using FirstOrCreate with Assign
+	// Store OTP in database - reset attempts counter on new OTP generation
 	passwordOTP := model.PasswordOTP{
-		Email:     req.Email,
-		OtpHash:   string(otpHash),
-		ExpiresAt: expiresAt,
+		Email:       req.Email,
+		OtpHash:     string(otpHash),
+		ExpiresAt:   expiresAt,
+		Attempts:    0,           // Reset attempts for new OTP
+		MaxAttempts: 5,           // Maximum 5 attempts
+		LockedUntil: nil,         // Clear any previous lock
 	}
 
 	result := db.Where(model.PasswordOTP{Email: req.Email}).
-		Assign(model.PasswordOTP{OtpHash: string(otpHash), ExpiresAt: expiresAt}).
+		Assign(model.PasswordOTP{
+			OtpHash:     string(otpHash),
+			ExpiresAt:   expiresAt,
+			Attempts:    0,
+			MaxAttempts: 5,
+			LockedUntil: nil,
+		}).
 		FirstOrCreate(&passwordOTP)
 
 	if result.Error != nil {
@@ -162,6 +171,15 @@ func ResetPassword(c *gin.Context) {
 		return
 	}
 
+	// Check if account is locked
+	if passwordOTP.LockedUntil != nil && time.Now().Before(*passwordOTP.LockedUntil) {
+		remainingTime := time.Until(*passwordOTP.LockedUntil).Round(time.Second)
+		c.JSON(http.StatusTooManyRequests, gin.H{
+			"error": fmt.Sprintf("Too many failed attempts. Account locked for %v. Please request a new OTP.", remainingTime),
+		})
+		return
+	}
+
 	// Check if OTP has expired
 	if time.Now().After(passwordOTP.ExpiresAt) {
 		// Clean up expired OTP
@@ -172,11 +190,38 @@ func ResetPassword(c *gin.Context) {
 		return
 	}
 
+	// Check if maximum attempts exceeded
+	if passwordOTP.Attempts >= passwordOTP.MaxAttempts {
+		// Lock account for 15 minutes
+		lockUntil := time.Now().Add(15 * time.Minute)
+		db.Model(&passwordOTP).Updates(map[string]interface{}{
+			"locked_until": lockUntil,
+		})
+		
+		c.JSON(http.StatusTooManyRequests, gin.H{
+			"error": "Maximum OTP attempts exceeded. Account locked for 15 minutes. Please request a new OTP after the lock expires.",
+		})
+		return
+	}
+
 	// Verify OTP
 	err = bcrypt.CompareHashAndPassword([]byte(passwordOTP.OtpHash), []byte(req.OTP))
 	if err != nil {
+		// Increment failed attempts
+		db.Model(&passwordOTP).Update("attempts", passwordOTP.Attempts+1)
+		
+		remainingAttempts := passwordOTP.MaxAttempts - passwordOTP.Attempts - 1
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid OTP provided",
+			"error": fmt.Sprintf("Invalid OTP provided. %d attempts remaining.", remainingAttempts),
+		})
+		return
+	}
+
+	// Validate password strength
+	if err := helpers.ValidatePasswordStrength(req.NewPassword); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":        err.Error(),
+			"requirements": helpers.GetPasswordRequirements(),
 		})
 		return
 	}

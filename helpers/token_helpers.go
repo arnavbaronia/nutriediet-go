@@ -3,6 +3,9 @@ package helpers
 import (
 	"errors"
 	"fmt"
+	"log"
+	"os"
+	
 	"github.com/cd-Ishita/nutriediet-go/database"
 	jwt "github.com/golang-jwt/jwt/v5"
 	"strconv"
@@ -18,9 +21,38 @@ type SignedDetails struct {
 	jwt.RegisteredClaims
 }
 
-var SECRET_KEY = ""
+var SECRET_KEY string
+var jwtInitialized = false
+
+// initJWTSecret initializes and validates the JWT secret key
+// Called on first use instead of in init() to ensure env vars are loaded first
+func initJWTSecret() {
+	if jwtInitialized {
+		return
+	}
+	
+	SECRET_KEY = os.Getenv("JWT_SECRET_KEY")
+	
+	// Validate JWT secret key exists
+	if SECRET_KEY == "" {
+		log.Fatal("❌ JWT_SECRET_KEY environment variable is required. Generate one with: openssl rand -base64 64")
+	}
+	
+	// Validate minimum length (256 bits = 32 bytes minimum)
+	if len(SECRET_KEY) < 32 {
+		log.Fatal("❌ JWT_SECRET_KEY must be at least 32 characters long for security")
+	}
+	
+	jwtInitialized = true
+	log.Println("✅ JWT Secret Key loaded successfully")
+}
 
 func GenerateAllTokens(email, firstName, lastName, userType string, id uint64) (string, string, error) {
+	// Initialize JWT secret on first use
+	initJWTSecret()
+	
+	// Access token - valid for 15 minutes
+	// This is the token used for API requests, does not need user logins every 15 minutes
 	claims := &SignedDetails{
 		Email:     email,
 		FirstName: firstName,
@@ -28,28 +60,29 @@ func GenerateAllTokens(email, firstName, lastName, userType string, id uint64) (
 		UserType:  userType,
 		UserID:    strconv.FormatUint(id, 10),
 		RegisteredClaims: jwt.RegisteredClaims{
-			// TODO: finalise the expires at values
-			ExpiresAt: jwt.NewNumericDate(time.Now().Local().Add(time.Hour * time.Duration(8760))),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(15 * time.Minute)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 	}
 
+	// Refresh token - valid for 3 months (90 days)
 	refreshClaims := &SignedDetails{
+		Email:  email,
+		UserID: strconv.FormatUint(id, 10),
 		RegisteredClaims: jwt.RegisteredClaims{
-			// TODO: finalise the expires at values
-			ExpiresAt: jwt.NewNumericDate(time.Now().Local().Add(time.Hour * time.Duration(8760))),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(90 * 24 * time.Hour)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 	}
 
 	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(SECRET_KEY))
 	if err != nil {
-		fmt.Println("error: cannot generate the token for the user", email)
-		return "", "", err
+		return "", "", fmt.Errorf("failed to generate access token: %v", err)
 	}
 
 	refreshToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims).SignedString([]byte(SECRET_KEY))
 	if err != nil {
-		fmt.Println("error: cannot generate the refresh token for the user", email)
-		return "", "", err
+		return "", "", fmt.Errorf("failed to generate refresh token: %v", err)
 	}
 
 	return token, refreshToken, nil
@@ -69,22 +102,29 @@ func UpdateTokens(token, refreshToken string, id uint64) error {
 }
 
 func ValidateToken(token string) (SignedDetails, error) {
+	// Initialize JWT secret on first use
+	initJWTSecret()
+	
 	res, err := jwt.ParseWithClaims(token, &SignedDetails{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(SECRET_KEY), nil
 	})
 	if err != nil {
-		fmt.Errorf("error parsing claims: %v", err)
-		return SignedDetails{}, err
+		return SignedDetails{}, fmt.Errorf("error parsing token: %v", err)
 	}
 
 	claims, ok := res.Claims.(*SignedDetails)
 	if !ok {
-		return SignedDetails{}, errors.New("invalid token")
+		return SignedDetails{}, errors.New("invalid token claims")
 	}
 
-	// check if token is expired
-	if claims.ExpiresAt.Before(time.Now()) {
-		return SignedDetails{}, errors.New("expired token")
+	if claims == nil {
+		return SignedDetails{}, errors.New("token claims are nil")
 	}
+
+	// Check if token is expired
+	if claims.ExpiresAt.Before(time.Now()) {
+		return SignedDetails{}, errors.New("token has expired")
+	}
+	
 	return *claims, nil
 }

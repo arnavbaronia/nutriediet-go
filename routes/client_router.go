@@ -10,7 +10,11 @@ import (
 )
 
 func UserRoutes(incomingRoutes *gin.Engine) {
-	// Authentication middleware applies to all routes
+	// Rate limiting for authenticated API endpoints (100 requests/minute)
+	apiRateLimit := middleware.RateLimitAPI()
+	
+	// Apply rate limiting and authentication to all routes
+	incomingRoutes.Use(apiRateLimit)
 	incomingRoutes.Use(middleware.Authenticate)
 
 	// USER ROUTES
@@ -100,4 +104,16 @@ func UserRoutes(incomingRoutes *gin.Engine) {
 	incomingRoutes.POST("/admin/motivation/:motivation_id/unpost", adminController.UnpostMotivation)
 	incomingRoutes.POST("/admin/motivation/:motivation_id/post", adminController.PostMotivation)
 	incomingRoutes.GET("/admin/motivation", adminController.GetAllMotivations)
+
+	// <<<<<<<<===============================================================================>>>>>>
+	// ADMIN - USER MANAGEMENT (Protected routes)
+	
+	incomingRoutes.GET("/admin/users", controller.GetUsers)
+
+	// ADMIN - EXERCISE MANAGEMENT (Previously unprotected in main.go - now secured)
+	incomingRoutes.GET("/admin/exercises/all", controller.GetExercisesForAdmin)
+	incomingRoutes.GET("/admin/exercises/detail/:exercise_id", controller.GetExercise)
+	incomingRoutes.POST("/admin/exercises/:exercise_id/delete", controller.RemoveExerciseFromList)
+	incomingRoutes.POST("/admin/exercises/:exercise_id/update", controller.UpdateExerciseFromList)
+	incomingRoutes.POST("/admin/exercises/submit", controller.AddExerciseFromList)
 }
