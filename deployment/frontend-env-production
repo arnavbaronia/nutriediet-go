@@ -1,0 +1,7 @@
+# React App Environment Variables for Production
+# Copy this to frontend/.env.production before building
+
+REACT_APP_API_URL=/new/api
+PUBLIC_URL=/new
+NODE_ENV=production
+

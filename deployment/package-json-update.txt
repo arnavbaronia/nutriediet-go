@@ -1,0 +1,17 @@
+UPDATE REQUIRED: Add this line to your frontend/package.json
+
+Add after the "name" field:
+
+  "homepage": "/new",
+
+Example:
+{
+  "name": "frontend",
+  "version": "0.1.0",
+  "homepage": "/new",
+  "private": true,
+  ...
+}
+
+This ensures all asset paths in the React build use /new as the base path.
+

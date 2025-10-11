@@ -10,24 +10,19 @@ func init() {
 }
 
 func main() {
-	//database.DB.AutoMigrate(&model.Client{})
-	// database.DB.AutoMigrate(&model.DietHistory{})
-	// database.DB.Migrator().DropColumn(&model.DietHistory{}, "saved_date")
-	//database.DB.AutoMigrate(&model.DietTemplate{})
-	//database.DB.AutoMigrate(&model.Client{})
-	//database.DB.AutoMigrate(&model.Exercise{})
-	// database.DB.Migrator().DropTable(&model.FavoriteExercise{})
-	// database.DB.AutoMigrate(&model.FavoriteExercise{})
-	//database.DB.AutoMigrate(&model.UserAuth{})
-	//database.DB.AutoMigrate(&model.Notification{})
-	//database.DB.AutoMigrate(&model.Payment{})
-	// database.DB.AutoMigrate(&model.Recipe{})
-	database.DB.Migrator().DropColumn(&model.Recipe{}, "image_data")
-	database.DB.Migrator().DropColumn(&model.Recipe{}, "image_type")
+	database.DB.AutoMigrate(&model.Client{})
+	database.DB.AutoMigrate(&model.DietHistory{})
+	database.DB.AutoMigrate(&model.DietTemplate{})
+	database.DB.AutoMigrate(&model.Exercise{})
+	database.DB.AutoMigrate(&model.FavoriteExercise{})
+	database.DB.AutoMigrate(&model.UserAuth{})
+	database.DB.AutoMigrate(&model.Notification{})
 	database.DB.AutoMigrate(&model.Recipe{})
+	database.DB.AutoMigrate(&model.PasswordOTP{})
+	database.DB.AutoMigrate(&model.UserAuth{})
 
 	// Migrate password OTP table for forgot password functionality
-	//database.DB.AutoMigrate(&model.PasswordOTP{})
+	
 	//dummyData1()
 }
 

@@ -9,7 +9,7 @@ type PasswordOTP struct {
 	Attempts     int        `gorm:"not null;default:0" json:"attempts"`
 	MaxAttempts  int        `gorm:"not null;default:5" json:"max_attempts"`
 	LockedUntil  *time.Time `gorm:"null" json:"locked_until,omitempty"`
-	CreatedAt    time.Time  `gorm:"autoCreateTime;not null;default:CURRENT_TIMESTAMP" json:"created_at"`
+	CreatedAt    time.Time  `gorm:"autoCreateTime;not null" json:"created_at"`
 }
 
 func (PasswordOTP) TableName() string {
