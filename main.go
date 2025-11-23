@@ -40,21 +40,21 @@ func main() {
 	router := gin.New()
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
-	
+
 	// Security headers - protects against XSS, clickjacking, etc.
 	router.Use(middleware.SecurityHeaders())
 
 	// CORS configuration
 	config := cors.Config{
-		AllowOrigins:     []string{"https://nutriediet.netlify.app", "http://localhost:3000"},
+		AllowOrigins:     []string{"https://nutriediet.netlify.app", "http://localhost:3000", "https://staging.nutriediet.com"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Client-Email", "Request-Client-ID"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Client-Email", "Request-Client-ID", "Accept"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}
 	router.Use(cors.New(config))
-	
+
 	// Serve static images with no-cache headers (for development)
 	router.Use(func(c *gin.Context) {
 		if strings.HasPrefix(c.Request.URL.Path, "/images/") {
