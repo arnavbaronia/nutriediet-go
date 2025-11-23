@@ -42,7 +42,7 @@ func GetAllClients(c *gin.Context) {
 	lastDietDates := []model.DietHistory{}
 
 	err = db.Table("diet_histories AS d").
-		Select("d.client_id, d.date").
+		Select("DISTINCT d.client_id, d.date").
 		Joins("JOIN (SELECT client_id, MAX(date) as max_date FROM diet_histories WHERE client_id IN (?) GROUP BY client_id) AS sub ON d.client_id = sub.client_id AND d.date = sub.max_date", clientIDs).
 		Find(&lastDietDates).Error
 	if err != nil {
@@ -51,9 +51,19 @@ func GetAllClients(c *gin.Context) {
 		return
 	}
 
+	processedClients := make(map[uint64]bool)
+
 	var activeClients []model.ClientMiniInfo
 	var inactiveClients []model.ClientMiniInfo
+	
+	// First, process clients with diet history
 	for _, res := range lastDietDates {
+		// Skip if already processed (belt-and-suspenders approach)
+		if processedClients[res.ClientID] {
+			continue
+		}
+		processedClients[res.ClientID] = true
+
 		index := clientIDMap[res.ClientID]
 		clients[index].LastDietDate = res.Date
 
@@ -61,6 +71,17 @@ func GetAllClients(c *gin.Context) {
 			activeClients = append(activeClients, clients[index])
 		} else {
 			inactiveClients = append(inactiveClients, clients[index])
+		}
+	}
+
+	// They were being excluded in the original code
+	for _, client := range clients {
+		if !processedClients[client.ID] {
+			if client.IsActive {
+				activeClients = append(activeClients, client)
+			} else {
+				inactiveClients = append(inactiveClients, client)
+			}
 		}
 	}
 

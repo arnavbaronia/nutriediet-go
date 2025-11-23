@@ -170,6 +170,8 @@ chmod 600 .env
 # Download dependencies and build
 go mod download
 go mod verify
+
+# Build the binary (note: the dot '.' at the end is required, not a dash '-')
 CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o nutriediet-go -ldflags="-s -w" .
 chmod +x nutriediet-go
 
@@ -465,6 +467,7 @@ mysql -u nutriediet_new_user -p nutriediet_new_db < backup.sql
 ```bash
 cd /home/sk/mys/nutriediet-new/backend
 git pull
+# Build the binary (note: the dot '.' at the end is required, not a dash '-')
 go build -o nutriediet-go -ldflags="-s -w" .
 pm2 restart nutriediet-go-api
 ```
