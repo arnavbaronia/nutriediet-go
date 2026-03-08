@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func AuthRoutes(incomingRoutes *gin.Engine) {
+func AuthRoutes(incomingRoutes gin.IRouter) {
 	// Rate limiter for authentication endpoints (5 requests/minute)
 	authRateLimit := middleware.RateLimitAuth()
 	
