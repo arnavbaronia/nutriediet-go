@@ -67,8 +67,9 @@ func main() {
 	router.Static("/images", "./images")
 
 	// Register routes
-	routes.AuthRoutes(router)
-	routes.UserRoutes(router)
+	api := router.Group("/api")
+	routes.AuthRoutes(api)
+	routes.UserRoutes(api)
 
 	// Start server
 	log.Printf("🚀 Server starting on port %s", port)

@@ -1,7 +1,13 @@
 # React App Environment Variables for Production
 # Copy this to frontend/.env.production before building
 
-REACT_APP_API_URL=/new/api
-PUBLIC_URL=/new
+# For staging deployment:
+REACT_APP_API_BASE_URL=https://staging.nutriediet.com
+REACT_APP_ENV=production
+GENERATE_SOURCEMAP=false
 NODE_ENV=production
+
+# For production with subpath deployment (if needed):
+# REACT_APP_API_BASE_URL=/new/api
+# PUBLIC_URL=/new
 

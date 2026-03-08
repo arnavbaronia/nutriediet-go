@@ -560,8 +560,8 @@ nano .env.production
 
 ```bash
 # Staging API configuration
-REACT_APP_API_URL=https://staging.nutriediet.com/api
-REACT_APP_ENV=staging
+REACT_APP_API_BASE_URL=https://staging.nutriediet.com
+REACT_APP_ENV=production
 GENERATE_SOURCEMAP=false
 PUBLIC_URL=https://staging.nutriediet.com
 
@@ -761,6 +761,43 @@ server {
     # Auth endpoints - moderate rate limiting for testing
     location ~ ^/(signup|login|auth/forgot-password|auth/reset-password) {
         limit_req zone=staging_auth_limit burst=5 nodelay;
+        limit_req_status 429;
+
+        proxy_pass http://staging_nutriediet_backend;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Request-ID $request_id;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    # Admin API endpoints (backend only - NOT /admin/login or /admin/dashboard which are frontend routes)
+    # Matches: /admin/clients, /admin/client/123, /admin/exercises, /admin/exercise/456, 
+    #          /admin/123/diet, /admin/common_diet, /admin/motivation/789/post, etc.
+    # Does NOT match: /admin/login, /admin/dashboard (these are frontend routes)
+    location ~ ^/admin/(clients?|exercises?|recipes?|diet_templates?|motivations?|common_diet|[0-9]+) {
+        limit_req zone=staging_api_limit burst=50 nodelay;
+        limit_req_status 429;
+
+        proxy_pass http://staging_nutriediet_backend;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Request-ID $request_id;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    # Client API endpoints (backend)
+    location ~ ^/clients/[0-9]+/ {
+        limit_req zone=staging_api_limit burst=50 nodelay;
         limit_req_status 429;
 
         proxy_pass http://staging_nutriediet_backend;
