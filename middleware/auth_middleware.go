@@ -47,6 +47,12 @@ func Authenticate(c *gin.Context) {
 	c.Set("last_name", claims.LastName)
 	c.Set("user_type", claims.UserType)
 	c.Set("user_id", claims.UserID)
+
+	if claims.UserType == "CLIENT" && !IsClientActive(claims.Email) {
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "account is inactive", "isActive": false})
+		return
+	}
+
 	c.Next()
 }
 
