@@ -42,8 +42,8 @@ func UserRoutes(incomingRoutes gin.IRouter) {
 	protected.GET("/clients/:client_id/my_profile", clientController.GetProfileForClient)
 	protected.GET("/clients/:client_id/profile_created", clientController.HasClientCreatedProfile)
 
-	// CLIENT - RECIPE
-	protected.GET("/clients/:client_id/recipe", clientController.GetRecipeImageForClients)
+	// CLIENT - RECIPES
+	protected.GET("/clients/:client_id/recipes", clientController.GetRecipesForClient)
 
 	// CLIENT - MOTIVATION
 	protected.GET("/clients/:client_id/motivation", clientController.GetActiveMotivationsForClients)
@@ -83,15 +83,11 @@ func UserRoutes(incomingRoutes gin.IRouter) {
 	protected.POST("/admin/diet_templates/:diet_template_id/delete", adminController.DeleteDietTemplateByID)
 
 	// ADMIN - RECIPES
-	//protected.GET("/admin/recipe/:id", adminController.GetRecipeByID)
-	//protected.POST("/admin/recipe/:id", adminController.UpdateRecipeByID)
-	//protected.POST("/admin/recipe/new", adminController.CreateRecipe)
-	//protected.POST("/admin/recipe/:id/delete", adminController.DeleteRecipeByID)
 	protected.GET("/admin/recipes", adminController.GetListOfRecipes)
-	protected.POST("/admin/recipes/upload", adminController.UploadRecipeImage)
-	protected.GET("/admin/recipes/:recipe_id", adminController.GetRecipeImageForAdmin)
-	protected.POST("/admin/recipes/:recipe_id/update", adminController.UpdateRecipeImageByAdmin)
-	protected.POST("/admin/recipes/:recipe_id/delete", adminController.DeleteRecipeImageByAdmin)
+	protected.POST("/admin/recipes/new", adminController.CreateRecipe)
+	protected.GET("/admin/recipes/:recipe_id", adminController.GetRecipeByID)
+	protected.POST("/admin/recipes/:recipe_id", adminController.UpdateRecipeByID)
+	protected.POST("/admin/recipes/:recipe_id/delete", adminController.DeleteRecipeByID)
 
 	// ADMIN - EXERCISES
 	protected.GET("/admin/exercises", adminController.GetListOfExercises)

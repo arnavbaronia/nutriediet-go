@@ -243,7 +243,7 @@ else
         do_req "GET" "$BASE_URL/clients/$CLIENT_ID/weight-history" "" "$TOKEN"
         assert_oneof "Get weight history" 200 404 "$STATUS" "$BODY"
 
-        do_req "GET" "$BASE_URL/clients/$CLIENT_ID/recipe" "" "$TOKEN"
+        do_req "GET" "$BASE_URL/clients/$CLIENT_ID/recipes" "" "$TOKEN"
         assert_oneof "Get recipes" 200 404 "$STATUS" "$BODY"
 
         do_req "GET" "$BASE_URL/clients/$CLIENT_ID/motivation" "" "$TOKEN"
